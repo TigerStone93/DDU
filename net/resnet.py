@@ -2,6 +2,7 @@
 Pytorch implementation of ResNet models.
 Reference:
 [1] He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition. In: CVPR, 2016.
+https://aistudy9314.tistory.com/58
 """
 
 import torch
