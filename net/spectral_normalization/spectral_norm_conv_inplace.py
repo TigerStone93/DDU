@@ -10,6 +10,7 @@ Based on: Regularisation of Neural Networks by Enforcing Lipschitz Continuity
 import torch
 from torch.nn.functional import normalize, conv_transpose2d, conv2d
 
+# ========================================================================================== #
 
 class SpectralNormConv(object):
     # Invariant before and after each forward call:
@@ -160,6 +161,7 @@ class SpectralNormConv(object):
         module._register_load_state_dict_pre_hook(SpectralNormConvLoadStateDictPreHook(fn))
         return fn
 
+# ========================================================================================== #
 
 class SpectralNormConvLoadStateDictPreHook(object):
     # See docstring of SpectralNorm._version on the changes to spectral_norm.
@@ -187,6 +189,7 @@ class SpectralNormConvLoadStateDictPreHook(object):
                 weight_mat = fn.reshape_weight_to_matrix(weight_orig)
                 u = state_dict[prefix + fn.name + "_u"]
 
+# ========================================================================================== #
 
 class SpectralNormConvStateDictHook(object):
     # See docstring of SpectralNorm._version on the changes to spectral_norm.
@@ -201,6 +204,7 @@ class SpectralNormConvStateDictHook(object):
             raise RuntimeError("Unexpected key in metadata['spectral_norm_conv']: {}".format(key))
         local_metadata["spectral_norm_conv"][key] = self.fn._version
 
+# ========================================================================================== #
 
 def spectral_norm_conv(module, coeff, input_dim, n_power_iterations, name="weight", eps=1e-12):
     r"""Applies spectral normalization to a parameter in the given module.
@@ -237,7 +241,6 @@ def spectral_norm_conv(module, coeff, input_dim, n_power_iterations, name="weigh
     input_dim_4d = torch.Size([1, input_dim[0], input_dim[1], input_dim[2]])
     SpectralNormConv.apply(module, coeff, input_dim_4d, name, n_power_iterations, eps)
     return module
-
 
 def remove_spectral_norm_conv(module, name="weight"):
     r"""Removes the spectral normalization reparameterization from a module.
