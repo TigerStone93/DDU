@@ -105,8 +105,9 @@ if __name__ == "__main__":
         train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
         training_set_loss[epoch] = train_loss
         writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
-        
-        scheduler.step() # Decaying learning_rate in every epoch.
+
+        # Decaying learning_rate in every epoch.
+        scheduler.step()
         
         if (epoch + 1) % args.save_interval == 0:
             saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
