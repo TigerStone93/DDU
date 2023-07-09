@@ -1,6 +1,7 @@
 """
 Script to evaluate a single model. 
 """
+
 import os
 import json
 import math
@@ -38,6 +39,8 @@ from utils.args import eval_args
 # Temperature scaling
 from utils.temperature_scaling import ModelWithTemperature
 
+# ========================================================================================== #
+
 # Dataset params
 dataset_num_classes = {"cifar10": 10, "cifar100": 100, "svhn": 10}
 
@@ -48,9 +51,9 @@ models = {"resnet50": resnet50, "wide_resnet": wrn, "vgg16": vgg16}
 
 model_to_num_dim = {"resnet50": 2048, "wide_resnet": 640, "vgg16": 512}
 
+# ============================================================ #
 
 if __name__ == "__main__":
-
     args = eval_args().parse_args()
 
     # Checking if GPU is available
@@ -74,9 +77,11 @@ if __name__ == "__main__":
 
     # Pre temperature scaling
     # m1 - Uncertainty/Confidence Metric 1
-    #      for deterministic model: logsumexp, for ensemble: entropy
+    #      for deterministic model: logsumexp
+    #      for ensemble: entropy
     # m2 - Uncertainty/Confidence Metric 2
-    #      for deterministic model: entropy, for ensemble: MI
+    #      for deterministic model: entropy
+    #      for ensemble: MI
     eces = []
     m1_aurocs = []
     m1_auprcs = []
@@ -93,7 +98,7 @@ if __name__ == "__main__":
     topt = None
 
     for i in range(args.runs):
-        print (f"Evaluating run: {(i+1)}")
+        print(f"Evaluating run: {(i+1)}")
         # Loading the model(s)
         if args.model_type == "ensemble":
             val_loaders = []
