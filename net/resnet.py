@@ -34,9 +34,9 @@ class AvgPoolShortCut(nn.Module):
 
 # ========================================================================================== #
 
+# Basic Residual Block
 class BasicBlock(nn.Module):
     expansion = 1
-
     def __init__(self, input_size, wrapped_conv, in_planes, planes, stride=1, mod=True):
         super(BasicBlock, self).__init__()
         self.conv1 = wrapped_conv(input_size, in_planes, planes, kernel_size=3, stride=stride)
@@ -46,30 +46,27 @@ class BasicBlock(nn.Module):
         self.mod = mod
         self.activation = F.leaky_relu if self.mod else F.relu
 
-        self.shortcut = nn.Sequential()
+        self.shortcut = nn.Sequential() # Skip Connection
         if stride != 1 or in_planes != self.expansion * planes:
             if mod:
                 self.shortcut = nn.Sequential(AvgPoolShortCut(stride, self.expansion * planes, in_planes))
             else:
-                self.shortcut = nn.Sequential(
-                    wrapped_conv(input_size, in_planes, self.expansion * planes, kernel_size=1, stride=stride,),
-                    nn.BatchNorm2d(planes),
-                )
+                self.shortcut = nn.Sequential(wrapped_conv(input_size, in_planes, self.expansion * planes, kernel_size=1, stride=stride,), nn.BatchNorm2d(planes),)
 
     # ============================================================ #
     
     def forward(self, x):
         out = self.activation(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
+        out += self.shortcut(x) # Skip Connection
         out = self.activation(out)
         return out
 
 # ========================================================================================== #
 
+# Bottleneck Block
 class Bottleneck(nn.Module):
     expansion = 4
-
     def __init__(self, input_size, wrapped_conv, in_planes, planes, stride=1, mod=True):
         super(Bottleneck, self).__init__()
         self.conv1 = wrapped_conv(input_size, in_planes, planes, kernel_size=1, stride=1)
@@ -81,15 +78,12 @@ class Bottleneck(nn.Module):
         self.mod = mod
         self.activation = F.leaky_relu if self.mod else F.relu
 
-        self.shortcut = nn.Sequential()
+        self.shortcut = nn.Sequential() # Skip Connection
         if stride != 1 or in_planes != self.expansion * planes:
             if mod:
                 self.shortcut = nn.Sequential(AvgPoolShortCut(stride, self.expansion * planes, in_planes))
             else:
-                self.shortcut = nn.Sequential(
-                    wrapped_conv(input_size, in_planes, self.expansion * planes, kernel_size=1, stride=stride,),
-                    nn.BatchNorm2d(self.expansion * planes),
-                )
+                self.shortcut = nn.Sequential(wrapped_conv(input_size, in_planes, self.expansion * planes, kernel_size=1, stride=stride,), nn.BatchNorm2d(self.expansion * planes),)
 
     # ============================================================ #
     
@@ -126,11 +120,13 @@ class ResNet(nn.Module):
 
         self.mod = mod
 
+        # ============================== #
+
         def wrapped_conv(input_size, in_c, out_c, kernel_size, stride):
             padding = 1 if kernel_size == 3 else 0
 
             conv = nn.Conv2d(in_c, out_c, kernel_size, stride, padding, bias=False)
-
+            
             if not spectral_normalization:
                 return conv
 
@@ -142,8 +138,10 @@ class ResNet(nn.Module):
                 # Otherwise use spectral norm conv, with loose bound
                 shapes = (in_c, input_size, input_size)
                 wrapped_conv = spectral_norm_conv(conv, coeff, shapes, n_power_iterations)
-
+                
             return wrapped_conv
+
+        # ============================== #
 
         self.wrapped_conv = wrapped_conv
 
