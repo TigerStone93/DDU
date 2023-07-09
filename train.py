@@ -116,7 +116,8 @@ if __name__ == "__main__":
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
     torch.save(net.state_dict(), saved_name)
     print("Model saved to ", saved_name)
-
-    writer.close()
+    
     with open(saved_name[: saved_name.rfind("_")] + "_train_loss.json", "a") as f:
         json.dump(training_set_loss, f)
+    
+    writer.close()
