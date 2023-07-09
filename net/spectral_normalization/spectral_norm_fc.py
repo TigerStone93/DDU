@@ -207,6 +207,7 @@ class SpectralNormLoadStateDictPreHook:
                 v = fn._solve_v_and_rescale(weight_mat, u, sigma)
                 state_dict[weight_key + "_v"] = v
 
+# ========================================================================================== #
 
 # This is a top level class because Py2 pickle doesn't like inner class nor an
 # instancemethod.
@@ -226,6 +227,7 @@ class SpectralNormStateDictHook:
 
 T_module = TypeVar("T_module", bound=Module)
 
+# ========================================================================================== #
 
 def spectral_norm_fc(
     module: T_module,
@@ -283,7 +285,6 @@ def spectral_norm_fc(
             dim = 0
     SpectralNorm.apply(module, name, coeff, n_power_iterations, dim, eps)
     return module
-
 
 def remove_spectral_norm(module: T_module, name: str = "weight") -> T_module:
     r"""Removes the spectral normalization reparameterization from a module.
