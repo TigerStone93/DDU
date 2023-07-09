@@ -205,7 +205,6 @@ def resnet18(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwa
     )
     return model
 
-
 def resnet50(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
     model = ResNet(
         Bottleneck,
@@ -217,7 +216,6 @@ def resnet50(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwa
         **kwargs
     )
     return model
-
 
 def resnet101(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
     model = ResNet(
@@ -231,7 +229,6 @@ def resnet101(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kw
     )
     return model
 
-
 def resnet110(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
     model = ResNet(
         Bottleneck,
@@ -243,7 +240,6 @@ def resnet110(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kw
         **kwargs
     )
     return model
-
 
 def resnet152(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
     model = ResNet(
