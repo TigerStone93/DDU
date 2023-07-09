@@ -96,9 +96,7 @@ if __name__ == "__main__":
 
     # Creating summary writer in tensorboard
     writer = SummaryWriter(args.save_loc + "stats_logging/")
-
     training_set_loss = {}
-
     save_name = model_save_name(args.model, args.sn, args.mod, args.coeff, args.seed)
     print("Model save name", save_name)
 
@@ -107,9 +105,9 @@ if __name__ == "__main__":
         train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
         training_set_loss[epoch] = train_loss
         writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
-
-        scheduler.step()
-
+        
+        scheduler.step() # Decaying learning_rate in every epoch.
+        
         if (epoch + 1) % args.save_interval == 0:
             saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
             torch.save(net.state_dict(), saved_name)
