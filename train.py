@@ -29,6 +29,7 @@ from utils.train_utils import train_single_epoch, test_single_epoch
 # Tensorboard utilities
 from torch.utils.tensorboard import SummaryWriter
 
+# ========================================================================================== #
 
 dataset_num_classes = {"cifar10": 10, "cifar100": 100, "svhn": 10, "dirty_mnist": 10}
 
@@ -47,9 +48,7 @@ models = {
     "vgg16": vgg16,
 }
 
-
 if __name__ == "__main__":
-
     args = training_args().parse_args()
 
     print("Parsed args", args)
