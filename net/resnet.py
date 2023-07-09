@@ -3,6 +3,7 @@ Pytorch implementation of ResNet models.
 Reference:
 [1] He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition. In: CVPR, 2016.
 """
+
 import torch
 import math
 import torch.nn as nn
@@ -11,6 +12,7 @@ import torch.nn.functional as F
 from net.spectral_normalization.spectral_norm_conv_inplace import spectral_norm_conv
 from net.spectral_normalization.spectral_norm_fc import spectral_norm_fc
 
+# ========================================================================================== #
 
 class AvgPoolShortCut(nn.Module):
     def __init__(self, stride, out_c, in_c):
@@ -19,6 +21,8 @@ class AvgPoolShortCut(nn.Module):
         self.out_c = out_c
         self.in_c = in_c
 
+    # ============================================================ #
+    
     def forward(self, x):
         if x.shape[2] % 2 != 0:
             x = F.avg_pool2d(x, 1, self.stride)
@@ -28,6 +32,7 @@ class AvgPoolShortCut(nn.Module):
         x = torch.cat((x, pad), dim=1)
         return x
 
+# ========================================================================================== #
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -51,6 +56,8 @@ class BasicBlock(nn.Module):
                     nn.BatchNorm2d(planes),
                 )
 
+    # ============================================================ #
+    
     def forward(self, x):
         out = self.activation(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
@@ -58,6 +65,7 @@ class BasicBlock(nn.Module):
         out = self.activation(out)
         return out
 
+# ========================================================================================== #
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -83,6 +91,8 @@ class Bottleneck(nn.Module):
                     nn.BatchNorm2d(self.expansion * planes),
                 )
 
+    # ============================================================ #
+    
     def forward(self, x):
         out = self.activation(self.bn1(self.conv1(x)))
         out = self.activation(self.bn2(self.conv2(out)))
@@ -91,6 +101,7 @@ class Bottleneck(nn.Module):
         out = self.activation(out)
         return out
 
+# ========================================================================================== #
 
 class ResNet(nn.Module):
     def __init__(
@@ -155,6 +166,8 @@ class ResNet(nn.Module):
         self.feature = None
         self.temp = temp
 
+    # ============================================================ #
+    
     def _make_layer(self, block, input_size, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -164,6 +177,8 @@ class ResNet(nn.Module):
             input_size = math.ceil(input_size / stride)
         return nn.Sequential(*layers)
 
+    # ============================================================ #
+    
     def forward(self, x):
         out = self.activation(self.bn1(self.conv1(x)))
         out = self.layer1(out)
@@ -176,6 +191,7 @@ class ResNet(nn.Module):
         out = self.fc(out) / self.temp
         return out
 
+# ========================================================================================== #
 
 def resnet18(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
     model = ResNet(
