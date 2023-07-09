@@ -37,16 +37,14 @@ dataset_loader = {
     "cifar10": cifar10,
     "cifar100": cifar100,
     "svhn": svhn,
-    "dirty_mnist": dirty_mnist,
-}
+    "dirty_mnist": dirty_mnist,}
 
 models = {
     "lenet": lenet,
     "resnet18": resnet18,
     "resnet50": resnet50,
     "wide_resnet": wrn,
-    "vgg16": vgg16,
-}
+    "vgg16": vgg16,}
 
 # ============================================================ #
 
@@ -69,8 +67,7 @@ if __name__ == "__main__":
         mod=args.mod,
         coeff=args.coeff,
         num_classes=num_classes,
-        mnist="mnist" in args.dataset,
-    )
+        mnist="mnist" in args.dataset,)
 
     if args.gpu:
         net.cuda()
@@ -84,13 +81,10 @@ if __name__ == "__main__":
             lr=args.learning_rate,
             momentum=args.momentum,
             weight_decay=args.weight_decay,
-            nesterov=args.nesterov,
-        )
+            nesterov=args.nesterov,)
     elif args.optimiser == "adam":
         optimizer = optim.Adam(opt_params, lr=args.learning_rate, weight_decay=args.weight_decay)
-    scheduler = optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1
-    )
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1)
 
     train_loader, _ = dataset_loader[args.dataset].get_train_valid_loader(
         root=args.dataset_root,
@@ -98,8 +92,7 @@ if __name__ == "__main__":
         augment=args.data_aug,
         val_size=0.1,
         val_seed=args.seed,
-        pin_memory=args.gpu,
-    )
+        pin_memory=args.gpu,)
 
     # Creating summary writer in tensorboard
     writer = SummaryWriter(args.save_loc + "stats_logging/")
@@ -111,10 +104,7 @@ if __name__ == "__main__":
 
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
-        train_loss = train_single_epoch(
-            epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,
-        )
-
+        train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
         training_set_loss[epoch] = train_loss
         writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
 
