@@ -108,8 +108,7 @@ class ResNet(nn.Module):
         mod=True,
         coeff=3,
         n_power_iterations=1,
-        mnist=False,
-    ):
+        mnist=False,):
         """
         If the "mod" parameter is set to True, the architecture uses 2 modifications:
         1. LeakyReLU instead of normal ReLU
@@ -199,8 +198,7 @@ def resnet18(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwa
         mod=mod,
         temp=temp,
         mnist=mnist,
-        **kwargs
-    )
+        **kwargs)
     return model
 
 def resnet50(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
@@ -211,8 +209,7 @@ def resnet50(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwa
         mod=mod,
         temp=temp,
         mnist=mnist,
-        **kwargs
-    )
+        **kwargs)
     return model
 
 def resnet101(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
@@ -223,8 +220,7 @@ def resnet101(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kw
         mod=mod,
         temp=temp,
         mnist=mnist,
-        **kwargs
-    )
+        **kwargs)
     return model
 
 def resnet110(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
@@ -235,8 +231,7 @@ def resnet110(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kw
         mod=mod,
         temp=temp,
         mnist=mnist,
-        **kwargs
-    )
+        **kwargs)
     return model
 
 def resnet152(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
@@ -247,6 +242,5 @@ def resnet152(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kw
         mod=mod,
         temp=temp,
         mnist=mnist,
-        **kwargs
-    )
+        **kwargs)
     return model
