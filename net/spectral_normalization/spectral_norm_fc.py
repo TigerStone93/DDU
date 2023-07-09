@@ -3,11 +3,13 @@ Obtained from torch.nn.utils.spectral_norm at tag 1.6
 
 Spectral Normalization from https://arxiv.org/abs/1802.05957
 """
+
 import torch
 from torch.nn.functional import normalize
 from typing import Any, Optional, TypeVar
 from torch.nn.modules import Module
 
+# ========================================================================================== #
 
 class SpectralNorm:
     # Invariant before and after each forward call:
@@ -24,17 +26,12 @@ class SpectralNorm:
     # n_power_iterations: int
     # eps: float
 
-    def __init__(
-        self, coeff: float = 1.0, name: str = "weight", n_power_iterations: int = 1, dim: int = 0, eps: float = 1e-12,
-    ) -> None:
+    def __init__(self, coeff: float = 1.0, name: str = "weight", n_power_iterations: int = 1, dim: int = 0, eps: float = 1e-12,) -> None:
         self.coeff = coeff
         self.name = name
         self.dim = dim
         if n_power_iterations <= 0:
-            raise ValueError(
-                "Expected n_power_iterations to be positive, but "
-                "got n_power_iterations={}".format(n_power_iterations)
-            )
+            raise ValueError("Expected n_power_iterations to be positive, but got n_power_iterations={}".format(n_power_iterations))
         self.n_power_iterations = n_power_iterations
         self.eps = eps
 
@@ -162,9 +159,9 @@ class SpectralNorm:
         module._register_load_state_dict_pre_hook(SpectralNormLoadStateDictPreHook(fn))
         return fn
 
+# ========================================================================================== #
 
-# This is a top level class because Py2 pickle doesn't like inner class nor an
-# instancemethod.
+# This is a top level class because Py2 pickle doesn't like inner class nor an instancemethod.
 class SpectralNormLoadStateDictPreHook:
     # See docstring of SpectralNorm._version on the changes to spectral_norm.
     def __init__(self, fn) -> None:
