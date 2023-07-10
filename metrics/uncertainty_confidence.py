@@ -1,9 +1,11 @@
 """
 Metrics measuring either uncertainty or confidence of a model.
 """
+
 import torch
 import torch.nn.functional as F
 
+# ========================================================================================== #
 
 def entropy(logits):
     p = F.softmax(logits, dim=1)
@@ -12,16 +14,15 @@ def entropy(logits):
     entropy = -torch.sum(plogp, dim=1)
     return entropy
 
-
 def logsumexp(logits):
     return torch.logsumexp(logits, dim=1, keepdim=False)
 
+# ============================================================ #
 
 def confidence(logits):
     p = F.softmax(logits, dim=1)
     confidence, _ = torch.max(p, dim=1)
     return confidence
-
 
 def entropy_prob(probs):
     p = probs
@@ -30,7 +31,6 @@ def entropy_prob(probs):
     plogp = p * logp
     entropy = -torch.sum(plogp, dim=1)
     return entropy
-
 
 def mutual_information_prob(probs):
     mean_output = torch.mean(probs, dim=0)
