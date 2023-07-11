@@ -100,12 +100,10 @@ if __name__ == "__main__":
     for i in range(args.runs):
         print(f"Evaluating run: {(i+1)}")
         # Loading the model(s)
-        if args.model_type == "ensemble":
+        if args.model_type == "ensemble": # ensemble
             val_loaders = []
             for j in range(args.ensemble):
-                train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(
-                    batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+(5*i)+j), val_size=0.1, pin_memory=args.gpu,
-                )
+                train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+(5*i)+j), val_size=0.1, pin_memory=args.gpu,)
                 val_loaders.append(val_loader)
             # Evaluate an ensemble
             ensemble_loc = os.path.join(args.load_loc, ("Run" + str(i + 1)))
@@ -117,20 +115,14 @@ if __name__ == "__main__":
                 spectral_normalization=args.sn,
                 mod=args.mod,
                 coeff=args.coeff,
-                seed=(5*i+1)
-            )
-
-        else:
-            train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(
-                batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,
-            )
+                seed=(5*i+1))
+        else: # 
+            train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
             saved_model_name = os.path.join(
                 args.load_loc,
                 "Run" + str(i + 1),
-                model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",
-            )
-            net = models[args.model](
-                spectral_normalization=args.sn, mod=args.mod, coeff=args.coeff, num_classes=num_classes, temp=1.0,
+                model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",)
+            net = models[args.model](spectral_normalization=args.sn, mod=args.mod, coeff=args.coeff, num_classes=num_classes, temp=1.0,
             )
             if args.gpu:
                 net.cuda()
