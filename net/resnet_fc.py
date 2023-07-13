@@ -37,6 +37,7 @@ class AvgPoolShortCut(nn.Module):
 # ========================================================================================== #
 
 # Basic Residual Block
+# for ResNet18
 class BasicBlock(nn.Module):
     expansion = 1
     def __init__(self, input_size, wrapped_conv, in_planes, planes, stride=1, mod=True):
@@ -67,6 +68,7 @@ class BasicBlock(nn.Module):
 # ========================================================================================== #
 
 # Bottleneck Block
+# for ResNet50 ~ ResNet152
 class Bottleneck(nn.Module):
     expansion = 4
     def __init__(self, input_size, wrapped_conv, in_planes, planes, stride=1, mod=True):
@@ -104,21 +106,20 @@ class ResNet(nn.Module):
         self,
         block,
         num_blocks,
-        num_classes=10,
-        temp=1.0,
-        spectral_normalization=True,
-        mod=True,
-        coeff=3,
-        n_power_iterations=1,
-        mnist=False,):
+        num_classes = 10,
+        temp = 1.0,
+        spectral_normalization = True,
+        mod = True,
+        coeff = 3,
+        n_power_iterations = 1,
+        mnist = False,):
         """
         If the "mod" parameter is set to True, the architecture uses 2 modifications:
-        1. LeakyReLU instead of normal ReLU
+        1. LeakyReLU instead of ReLU
         2. Average Pooling on the residual connections.
         """
         super(ResNet, self).__init__()
         self.in_planes = 64
-
         self.mod = mod
 
         # ============================== #
