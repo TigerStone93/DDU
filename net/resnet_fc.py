@@ -63,6 +63,7 @@ class BasicBlock(nn.Module):
 
 # ========================================================================================== #
 
+"""
 # Bottleneck Block
 # for ResNet50 ~ ResNet152
 class Bottleneck(nn.Module):
@@ -94,6 +95,7 @@ class Bottleneck(nn.Module):
         out += self.shortcut(x)
         out = self.activation(out)
         return out
+"""
 
 # ========================================================================================== #
 
