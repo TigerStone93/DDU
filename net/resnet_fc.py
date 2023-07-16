@@ -105,20 +105,9 @@ class ResNet(nn.Module):
         block,
         num_blocks,
         num_classes = 10,
-        temp = 1.0,
-        spectral_normalization = True,
-        mod = True,
         coeff = 3,
-        n_power_iterations = 1,
-        mnist = False,):
-        """
-        If the "mod" parameter is set to True, the architecture uses 2 modifications:
-        1. LeakyReLU instead of ReLU
-        2. Average Pooling on the residual connections.
-        """
+        n_power_iterations = 1,):
         super(ResNet, self).__init__()
-        self.in_planes = 64
-        self.mod = mod
 
         # ============================== #
 
@@ -175,27 +164,20 @@ class ResNet(nn.Module):
     # ============================================================ #
     
     def forward(self, x):
-        out = self.activation(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        self.feature = out.clone().detach()
-        out = self.fc(out) / self.temp
+        out = self.layer_1(x)
+        out = self.layer_2(out)
+        out = self.layer_3(out)
+        out = self.layer_4(out)
+        out = self.fully_connected_layer(out)
         return out
 
 # ========================================================================================== #
 
-def resnet18(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
+def resnet18(**kwargs):
+    num_blocks = [2, 2, 2, 2]
     model = ResNet(
         BasicBlock,
-        [2, 2, 2, 2],
-        spectral_normalization=spectral_normalization,
-        mod=mod,
-        temp=temp,
-        mnist=mnist,
+        num_blocks,
         **kwargs)
     return model
 
