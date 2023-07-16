@@ -16,6 +16,7 @@ from net.spectral_normalization.spectral_norm_fc import spectral_norm_fc
 
 # ========================================================================================== #
 
+"""
 class AvgPoolShortCut(nn.Module):
     def __init__(self, stride, out_c, in_c):
         super(AvgPoolShortCut, self).__init__()
@@ -33,6 +34,7 @@ class AvgPoolShortCut(nn.Module):
         pad = torch.zeros(x.shape[0], self.out_c - self.in_c, x.shape[2], x.shape[3], device=x.device,)
         x = torch.cat((x, pad), dim=1)
         return x
+"""
 
 # ========================================================================================== #
 
@@ -40,8 +42,11 @@ class AvgPoolShortCut(nn.Module):
 # for ResNet18
 class BasicBlock(nn.Module):
     expansion = 1
-    def __init__(self, input_size, wrapped_conv, in_planes, planes, stride=1, mod=True):
+    def __init__(self, in_features, out_features):
         super(BasicBlock, self).__init__()
+        self.fc1 = nn.Linear(in_features, out_features)
+        self.fc2 = nn.Linear(out_features, out_features)
+        
         self.conv1 = wrapped_conv(input_size, in_planes, planes, kernel_size=3, stride=stride)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = wrapped_conv(math.ceil(input_size / stride), planes, planes, kernel_size=3, stride=1)
