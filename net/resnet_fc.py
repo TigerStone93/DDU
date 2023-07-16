@@ -44,30 +44,21 @@ class BasicBlock(nn.Module):
     expansion = 1
     def __init__(self, in_features, out_features):
         super(BasicBlock, self).__init__()
-        self.fc1 = nn.Linear(in_features, out_features)
-        self.fc2 = nn.Linear(out_features, out_features)
-        
-        self.conv1 = wrapped_conv(input_size, in_planes, planes, kernel_size=3, stride=stride)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = wrapped_conv(math.ceil(input_size / stride), planes, planes, kernel_size=3, stride=1)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.mod = mod
-        self.activation = F.leaky_relu if self.mod else F.relu
-
-        self.shortcut = nn.Sequential() # Skip Connection
-        if stride != 1 or in_planes != self.expansion * planes:
-            if mod:
-                self.shortcut = nn.Sequential(AvgPoolShortCut(stride, self.expansion * planes, in_planes))
-            else:
-                self.shortcut = nn.Sequential(wrapped_conv(input_size, in_planes, self.expansion * planes, kernel_size=1, stride=stride,), nn.BatchNorm2d(planes),)
+        self.fully_connected_1 = nn.Linear(in_features, out_features)
+        self.fully_connected_2 = nn.Linear(out_features, out_features)
+        self.downsampling = nn.Linear(in_features, out_features) # Skip Connection
+        self.leaky_relu = F.leaky_relu # Activation
 
     # ============================================================ #
     
     def forward(self, x):
-        out = self.activation(self.bn1(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(x) # Skip Connection
-        out = self.activation(out)
+        out = self.leaky_relu(self.fully_connected_1(x))
+        out = self.fully_connected_2(out)        
+        residual = x
+        if residual.shape != out.shape:
+            residual = self.downsampling(residual)
+        out += residual
+        out = self.leaky_relu(out)
         return out
 
 # ========================================================================================== #
