@@ -166,15 +166,12 @@ class ResNet(nn.Module):
 
     # ============================================================ #
     
-    def _make_layer(self, block, input_size, planes, num_blocks, stride):
-        strides = [stride] + [1] * (num_blocks - 1)
+    def _make_layer(self, block, in_features, out_features):
         layers = []
-        for stride in strides:
-            layers.append(block(input_size, self.wrapped_conv, self.in_planes, planes, stride, self.mod,))
-            self.in_planes = planes * block.expansion
-            input_size = math.ceil(input_size / stride)
+        layers.append(block(in_features, out_features))
+        layers.append(block(out_features, out_features))
         return nn.Sequential(*layers)
-
+        
     # ============================================================ #
     
     def forward(self, x):
