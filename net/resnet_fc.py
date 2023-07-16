@@ -137,17 +137,18 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
 
         self.conv1 = wrapped_conv(28, 1, 64, kernel_size=3)
-        self.layer1 = self._make_layer(block, 28, 64, num_blocks[0])
-        self.layer2 = self._make_layer(block, 28, 128, num_blocks[1])
-        self.layer3 = self._make_layer(block, 14, 256, num_blocks[2])
-        self.layer4 = self._make_layer(block, 7, 512, num_blocks[3])
+        self.layer1 = self._make_layer(block, 28, 64)
+        self.layer2 = self._make_layer(block, 28, 128)
+        self.layer3 = self._make_layer(block, 14, 256)
+        self.layer4 = self._make_layer(block, 7, 512)
         self.fc = nn.Linear(512 * block.expansion, num_classes)
         self.activation = F.leaky_relu if self.mod else F.relu
         self.feature = None
         self.temp = temp
 
     # ============================================================ #
-    
+
+    # Fully Connected Layer
     def _make_layer(self, block, in_features, out_features):
         layers = []
         layers.append(block(in_features, out_features))
@@ -167,10 +168,9 @@ class ResNet(nn.Module):
 # ========================================================================================== #
 
 def resnet18(**kwargs):
-    num_blocks = [2, 2, 2, 2]
+    # num_blocks = [2, 2, 2, 2] # Convolution
     model = ResNet(
         BasicBlock,
-        num_blocks,
         **kwargs)
     return model
 
