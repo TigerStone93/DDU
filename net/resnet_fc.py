@@ -199,6 +199,7 @@ def resnet18(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwa
         **kwargs)
     return model
 
+"""
 def resnet50(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
     model = ResNet(
         Bottleneck,
@@ -242,3 +243,4 @@ def resnet152(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kw
         mnist=mnist,
         **kwargs)
     return model
+"""
