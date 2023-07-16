@@ -10,31 +10,20 @@ import torch
 import math
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.utils import spectral_norm
 
-from net.spectral_normalization.spectral_norm_conv_inplace import spectral_norm_conv
-from net.spectral_normalization.spectral_norm_fc import spectral_norm_fc
+# from net.spectral_normalization.spectral_norm_conv_inplace import spectral_norm_conv
+# from net.spectral_normalization.spectral_norm_fc import spectral_norm_fc
 
 # ========================================================================================== #
 
-"""
-class AvgPoolShortCut(nn.Module):
-    def __init__(self, stride, out_c, in_c):
-        super(AvgPoolShortCut, self).__init__()
-        self.stride = stride
-        self.out_c = out_c
-        self.in_c = in_c
+class SpectralNormalizedFullyConnected(nn.Module):
+    def __init__(self, in_features, out_features):
+        super(SpectralNormalizedFullyConnected, self).__init__()
+        self.fully_connected = spectral_norm(nn.Linear(in_features, out_features))
 
-    # ============================================================ #
-    
-    def forward(self, x):
-        if x.shape[2] % 2 != 0:
-            x = F.avg_pool2d(x, 1, self.stride)
-        else:
-            x = F.avg_pool2d(x, self.stride, self.stride)
-        pad = torch.zeros(x.shape[0], self.out_c - self.in_c, x.shape[2], x.shape[3], device=x.device,)
-        x = torch.cat((x, pad), dim=1)
-        return x
-"""
+    def forward(self. x):
+        return self.fully_connected(x)
 
 # ========================================================================================== #
 
@@ -44,20 +33,22 @@ class BasicBlock(nn.Module):
     expansion = 1
     def __init__(self, in_features, out_features):
         super(BasicBlock, self).__init__()
-        self.fully_connected_1 = nn.Linear(in_features, out_features)
-        self.fully_connected_2 = nn.Linear(out_features, out_features)
-        self.downsampling = nn.Linear(in_features, out_features) # Skip Connection
+        self.fully_connected_1 = SpectralNormalizedFullyConnected(in_features, out_features)
+        self.fully_connected_2 = SpectralNormalizedFullyConnected(out_features, out_features)
+        self.downsampled = SpectralNormalizedFullyConnected(in_features, out_features) # Skip Connection
         self.leaky_relu = F.leaky_relu # Activation
 
     # ============================================================ #
     
     def forward(self, x):
         out = self.leaky_relu(self.fully_connected_1(x))
-        out = self.fully_connected_2(out)        
+        out = self.fully_connected_2(out)
+        
         residual = x
         if residual.shape != out.shape:
-            residual = self.downsampling(residual)
+            residual = self.downsampled(residual)
         out += residual
+        
         out = self.leaky_relu(out)
         return out
 
@@ -112,13 +103,13 @@ class ResNet(nn.Module):
         # ============================== #
 
         def wrapped_conv(input_size, in_c, out_c, kernel_size, stride):
-            padding = 1 if kernel_size == 3 else 0
+            if kernel_size == 3:
+                padding = 1
+            else:
+                padding = 0
 
             conv = nn.Conv2d(in_c, out_c, kernel_size, stride, padding, bias=False)
             
-            if not spectral_normalization:
-                return conv
-
             # NOTE: Google uses the spectral_norm_fc in all cases
             if kernel_size == 1:
                 # use spectral norm fc, because bound are tight for 1x1 convolutions
@@ -132,19 +123,13 @@ class ResNet(nn.Module):
 
         # ============================== #
 
-        self.wrapped_conv = wrapped_conv
+        # self.wrapped_conv = wrapped_conv
 
-        self.bn1 = nn.BatchNorm2d(64)
-
-        self.conv1 = wrapped_conv(28, 1, 64, kernel_size=3)
-        self.layer1 = self._make_layer(block, 28, 64)
-        self.layer2 = self._make_layer(block, 28, 128)
-        self.layer3 = self._make_layer(block, 14, 256)
-        self.layer4 = self._make_layer(block, 7, 512)
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
-        self.activation = F.leaky_relu if self.mod else F.relu
-        self.feature = None
-        self.temp = temp
+        self.layer_1 = self._make_layer(block, 28, 64)
+        self.layer_2 = self._make_layer(block, 28, 128)
+        self.layer_3 = self._make_layer(block, 14, 256)
+        self.layer_4 = self._make_layer(block, 7, 512)
+        self.fully_connected_layer = nn.Linear(512 * block.expansion, num_classes)
 
     # ============================================================ #
 
