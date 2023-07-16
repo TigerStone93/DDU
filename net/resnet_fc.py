@@ -136,18 +136,11 @@ class ResNet(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(64)
 
-        if mnist:
-            self.conv1 = wrapped_conv(28, 1, 64, kernel_size=3, stride=1)
-            self.layer1 = self._make_layer(block, 28, 64, num_blocks[0], stride=1)
-            self.layer2 = self._make_layer(block, 28, 128, num_blocks[1], stride=2)
-            self.layer3 = self._make_layer(block, 14, 256, num_blocks[2], stride=2)
-            self.layer4 = self._make_layer(block, 7, 512, num_blocks[3], stride=2)
-        else:
-            self.conv1 = wrapped_conv(32, 3, 64, kernel_size=3, stride=1)
-            self.layer1 = self._make_layer(block, 32, 64, num_blocks[0], stride=1)
-            self.layer2 = self._make_layer(block, 32, 128, num_blocks[1], stride=2)
-            self.layer3 = self._make_layer(block, 16, 256, num_blocks[2], stride=2)
-            self.layer4 = self._make_layer(block, 8, 512, num_blocks[3], stride=2)
+        self.conv1 = wrapped_conv(28, 1, 64, kernel_size=3)
+        self.layer1 = self._make_layer(block, 28, 64, num_blocks[0])
+        self.layer2 = self._make_layer(block, 28, 128, num_blocks[1])
+        self.layer3 = self._make_layer(block, 14, 256, num_blocks[2])
+        self.layer4 = self._make_layer(block, 7, 512, num_blocks[3])
         self.fc = nn.Linear(512 * block.expansion, num_classes)
         self.activation = F.leaky_relu if self.mod else F.relu
         self.feature = None
