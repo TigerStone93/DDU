@@ -2,8 +2,14 @@
 Pytorch implementation of ResNet models.
 Reference:
 [1] He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition. In: CVPR, 2016.
+
+ResNet
 https://aistudy9314.tistory.com/58
 https://pseudo-lab.github.io/pytorch-guide/docs/ch03-1.html
+
+Spectral Normalization
+https://pytorch.org/docs/stable/generated/torch.nn.utils.spectral_norm.html
+https://github.com/pytorch/pytorch/blob/main/torch/nn/utils/spectral_norm.py
 """
 
 import torch
@@ -12,8 +18,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import spectral_norm
 
-# from net.spectral_normalization.spectral_norm_conv_inplace import spectral_norm_conv
-# from net.spectral_normalization.spectral_norm_fc import spectral_norm_fc
+# from net.spectral_normalization.spectral_norm_conv_inplace import spectral_norm_conv # coeff
+# from net.spectral_normalization.spectral_norm_fc import spectral_norm_fc # coeff
 
 # ========================================================================================== #
 
@@ -95,41 +101,14 @@ class ResNet(nn.Module):
         self,
         block,
         num_blocks,
-        num_classes = 10,
-        coeff = 3,
-        n_power_iterations = 1,):
+        num_outputs = 10,):
         super(ResNet, self).__init__()
 
-        # ============================== #
-
-        def wrapped_conv(input_size, in_c, out_c, kernel_size, stride):
-            if kernel_size == 3:
-                padding = 1
-            else:
-                padding = 0
-
-            conv = nn.Conv2d(in_c, out_c, kernel_size, stride, padding, bias=False)
-            
-            # NOTE: Google uses the spectral_norm_fc in all cases
-            if kernel_size == 1:
-                # use spectral norm fc, because bound are tight for 1x1 convolutions
-                wrapped_conv = spectral_norm_fc(conv, coeff, n_power_iterations)
-            else:
-                # Otherwise use spectral norm conv, with loose bound
-                shapes = (in_c, input_size, input_size)
-                wrapped_conv = spectral_norm_conv(conv, coeff, shapes, n_power_iterations)
-                
-            return wrapped_conv
-
-        # ============================== #
-
-        # self.wrapped_conv = wrapped_conv
-
-        self.layer_1 = self._make_layer(block, 28, 64)
-        self.layer_2 = self._make_layer(block, 28, 128)
-        self.layer_3 = self._make_layer(block, 14, 256)
-        self.layer_4 = self._make_layer(block, 7, 512)
-        self.fully_connected_layer = nn.Linear(512 * block.expansion, num_classes)
+        self.layer_1 = self._make_layer(block, 784, 784)
+        self.layer_2 = self._make_layer(block, 392, 392)
+        self.layer_3 = self._make_layer(block, 196, 196)
+        self.layer_4 = self._make_layer(block, 98, 98)
+        self.fully_connected_layer = nn.Linear(98 * block.expansion, num_outputs)
 
     # ============================================================ #
 
