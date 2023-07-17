@@ -15,7 +15,7 @@ def training_args():
 
     learning_rate = 0.1
     momentum = 0.9
-    optimiser = "sgd"
+    optimizer = "sgd"
     loss = "cross_entropy"
     weight_decay = 5e-4
     log_interval = 50
@@ -54,7 +54,7 @@ def training_args():
     parser.add_argument("--nesterov", action="store_true", dest="nesterov", help="Whether to use nesterov momentum in SGD",)
     parser.set_defaults(nesterov=False)
     parser.add_argument("--decay", type=float, default=weight_decay, dest="weight_decay", help="Weight Decay",)
-    parser.add_argument("--opt", type=str, default=optimiser, dest="optimiser", help="Choice of optimisation algorithm",)
+    parser.add_argument("--opt", type=str, default=optimizer, dest="optimizer", help="Choice of optimisation algorithm",)
 
     parser.add_argument("--loss", type=str, default=loss, dest="loss_function", help="Loss function to be used for training",)
     parser.add_argument("--loss-mean", action="store_true", dest="loss_mean", help="whether to take mean of loss instead of sum to train",)
