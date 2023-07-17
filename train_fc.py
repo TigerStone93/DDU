@@ -15,10 +15,7 @@ import data.ood_detection.svhn as svhn
 import data.dirty_mnist as dirty_mnist
 
 # Import network models
-from net.lenet import lenet
 from net.resnet import resnet18, resnet50
-from net.wide_resnet import wrn
-from net.vgg import vgg16
 
 # Import train and validation utilities
 from utils.args import training_args
@@ -31,7 +28,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 # ========================================================================================== #
 
-dataset_num_classes = {"cifar10": 10, "cifar100": 100, "svhn": 10, "dirty_mnist": 10}
+dataset_num_outputs = {"cifar10": 10, "cifar100": 100, "svhn": 10, "dirty_mnist": 10}
 
 dataset_loader = {
     "cifar10": cifar10,
@@ -40,11 +37,8 @@ dataset_loader = {
     "dirty_mnist": dirty_mnist,}
 
 models = {
-    "lenet": lenet,
     "resnet18": resnet18,
-    "resnet50": resnet50,
-    "wide_resnet": wrn,
-    "vgg16": vgg16,}
+    "resnet50": resnet50,}
 
 # ============================================================ #
 
@@ -59,14 +53,14 @@ if __name__ == "__main__":
     device = torch.device("cuda" if cuda else "cpu")
     print("CUDA set: " + str(cuda))
 
-    num_classes = dataset_num_classes[args.dataset]
+    num_outputs = dataset_num_outputs[args.dataset]
 
     # Choosing the model to train
     net = models[args.model](
         spectral_normalization=args.sn,
         mod=args.mod,
         coeff=args.coeff,
-        num_classes=num_classes,
+        num_outputs=num_outputs,
         mnist="mnist" in args.dataset,)
 
     if args.gpu:
@@ -108,11 +102,13 @@ if __name__ == "__main__":
 
         # Decaying learning_rate in every epoch.
         scheduler.step()
-        
+
+        # Saving model
         if (epoch + 1) % args.save_interval == 0:
             saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
             torch.save(net.state_dict(), saved_name)
 
+    # Saving model
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
     torch.save(net.state_dict(), saved_name)
     print("Model saved to ", saved_name)
