@@ -29,8 +29,7 @@ def training_args():
     model = "resnet50"
     sn_coeff = 3.0
 
-    parser = argparse.ArgumentParser(
-        description="Args for training parameters", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
+    parser = argparse.ArgumentParser(description="Args for training parameters", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
     parser.add_argument("--seed", type=int, dest="seed", required=True, help="Seed to use")
     parser.add_argument("--dataset", type=str, default=default_dataset, dest="dataset", help="dataset to train on",)
     parser.add_argument("--dataset-root", type=str, default=dataset_root, dest="dataset_root", help="path of a dataset (useful for dirty mnist)",)
