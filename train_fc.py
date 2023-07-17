@@ -43,7 +43,8 @@ models = {
 # ============================================================ #
 
 if __name__ == "__main__":
-    args = training_args().parse_args()
+    # Parsing arguments
+    args = training_args().parse_args() # utils.args training_args()
 
     # Setting seed
     print("Parsed args", args)
@@ -55,17 +56,20 @@ if __name__ == "__main__":
     device = torch.device("cuda" if cuda else "cpu")
     print("CUDA set: " + str(cuda))
 
+    # Setting num_outputs from dataset
     num_outputs = dataset_num_outputs[args.dataset]
 
-    # Choosing the model to train
+    # Choosing model to train
     net = models[args.model](
         num_outputs = num_outputs,)
-    
+
+    # Using gpu
     if args.gpu:
         net.cuda()
         net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
         cudnn.benchmark = True
-    
+
+    # Choosing optimizer
     opt_params = net.parameters()
     if args.optimizer == "sgd":
         optimizer = optim.SGD(opt_params, lr=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=args.nesterov,)
