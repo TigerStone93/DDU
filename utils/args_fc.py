@@ -42,11 +42,11 @@ def training_args():
     parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
     parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
 
-    parser.add_argument("-sn", action="store_true", dest="sn", help="whether to use spectral normalisation during training",)
-    parser.set_defaults(sn=False)
-    parser.add_argument("--coeff", type=float, default=sn_coeff, dest="coeff", help="Coeff parameter for spectral normalisation",)
-    parser.add_argument("-mod", action="store_true", dest="mod", help="whether to use architectural modifications during training",)
-    parser.set_defaults(mod=False)
+    # parser.add_argument("-sn", action="store_true", dest="sn", help="whether to use spectral normalisation during training",)
+    # parser.set_defaults(sn=False)
+    # parser.add_argument("--coeff", type=float, default=sn_coeff, dest="coeff", help="Coeff parameter for spectral normalisation",)
+    # parser.add_argument("-mod", action="store_true", dest="mod", help="whether to use architectural modifications during training",)
+    # parser.set_defaults(mod=False)
 
     parser.add_argument("-e", type=int, default=epoch, dest="epoch", help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=learning_rate, dest="learning_rate", help="Learning rate",)
