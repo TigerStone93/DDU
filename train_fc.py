@@ -21,10 +21,55 @@ from net.resnet import resnet18, resnet50
 from utils.args import training_args
 from utils.eval_utils import get_eval_stats
 from utils.train_utils import model_save_name
-from utils.train_utils import train_single_epoch, test_single_epoch
 
 # Tensorboard utilities
 from torch.utils.tensorboard import SummaryWriter
+
+# ========================================================================================== #
+
+def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
+    log_interval = 10
+    model.train()
+    train_loss = 0
+    num_samples = 0
+    for batch_idx, (data, labels) in enumerate(train_loader):
+        data = data.to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad()
+
+        logits = model(data)
+        loss = loss_function_dict[loss_function](logits, labels)
+
+        if loss_mean:
+            loss = loss / len(data)
+
+        loss.backward()
+        train_loss += loss.item()
+        optimizer.step()
+        num_samples += len(data)
+
+        if batch_idx % log_interval == 0:
+            print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
+
+    print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss / num_samples))
+    return train_loss / num_samples
+
+# ============================================================ #
+
+def model_save_name(model_name, sn, mod, coeff, seed):
+    if sn:
+        if mod:
+            strn = "_sn_" + str(coeff) + "_mod_"
+        else:
+            strn = "_sn_" + str(coeff) + "_"
+    else:
+        if mod:
+            strn = "_mod_"
+        else:
+            strn = "_"
+
+    return str(model_name) + strn + str(seed)
 
 # ========================================================================================== #
 
@@ -40,7 +85,7 @@ models = {
     "resnet18": resnet18,
     "resnet50": resnet50,}
 
-# ============================================================ #
+# ========================================================================================== #
 
 if __name__ == "__main__":
     # Parsing arguments
