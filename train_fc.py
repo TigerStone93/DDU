@@ -45,10 +45,12 @@ models = {
 if __name__ == "__main__":
     args = training_args().parse_args()
 
+    # Setting seed
     print("Parsed args", args)
     print("Seed: ", args.seed)
     torch.manual_seed(args.seed)
 
+    # Setting device
     cuda = torch.cuda.is_available() and args.gpu
     device = torch.device("cuda" if cuda else "cpu")
     print("CUDA set: " + str(cuda))
@@ -70,16 +72,12 @@ if __name__ == "__main__":
 
     opt_params = net.parameters()
     if args.optimiser == "sgd":
-        optimizer = optim.SGD(
-            opt_params,
-            lr=args.learning_rate,
-            momentum=args.momentum,
-            weight_decay=args.weight_decay,
-            nesterov=args.nesterov,)
+        optimizer = optim.SGD(opt_params, lr=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=args.nesterov,)
     elif args.optimiser == "adam":
         optimizer = optim.Adam(opt_params, lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1)
 
+    # Loading train dataset
     train_loader, _ = dataset_loader[args.dataset].get_train_valid_loader(
         root=args.dataset_root,
         batch_size=args.train_batch_size,
