@@ -59,21 +59,17 @@ if __name__ == "__main__":
 
     # Choosing the model to train
     net = models[args.model](
-        spectral_normalization=args.sn,
-        mod=args.mod,
-        coeff=args.coeff,
-        num_outputs=num_outputs,
-        mnist="mnist" in args.dataset,)
-
+        num_outputs = num_outputs,)
+    
     if args.gpu:
         net.cuda()
         net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
         cudnn.benchmark = True
-
+    
     opt_params = net.parameters()
-    if args.optimiser == "sgd":
+    if args.optimizer == "sgd":
         optimizer = optim.SGD(opt_params, lr=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=args.nesterov,)
-    elif args.optimiser == "adam":
+    elif args.optimizer == "adam":
         optimizer = optim.Adam(opt_params, lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1)
 
