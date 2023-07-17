@@ -10,12 +10,7 @@ from torch import nn
 loss_function_dict = {"cross_entropy": F.cross_entropy}
 
 
-def train_single_epoch(
-    epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,
-):
-    """
-    Util method for training a model for a single epoch.
-    """
+def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
     log_interval = 10
     model.train()
     train_loss = 0
@@ -38,24 +33,13 @@ def train_single_epoch(
         num_samples += len(data)
 
         if batch_idx % log_interval == 0:
-            print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader) * len(data),
-                    100.0 * batch_idx / len(train_loader),
-                    loss.item(),
-                )
-            )
+            print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
 
     print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss / num_samples))
     return train_loss / num_samples
 
 
 def test_single_epoch(epoch, model, test_val_loader, device, loss_function="cross_entropy"):
-    """
-    Util method for testing a model for a single epoch.
-    """
     model.eval()
     loss = 0
     num_samples = 0
