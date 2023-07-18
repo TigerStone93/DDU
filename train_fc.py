@@ -108,22 +108,6 @@ def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_funct
     print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss / num_samples))
     return train_loss / num_samples
 
-# ============================================================ #
-
-def model_save_name(model_name, sn, mod, coeff, seed):
-    if sn:
-        if mod:
-            strn = "_sn_" + str(coeff) + "_mod_"
-        else:
-            strn = "_sn_" + str(coeff) + "_"
-    else:
-        if mod:
-            strn = "_mod_"
-        else:
-            strn = "_"
-
-    return str(model_name) + strn + str(seed)
-
 # ========================================================================================== #
 
 dataset_num_outputs = {"cifar10": 10, "cifar100": 100, "svhn": 10, "dirty_mnist": 10}
@@ -187,7 +171,7 @@ if __name__ == "__main__":
     # Creating summary writer in tensorboard
     writer = SummaryWriter(args.save_loc + "stats_logging/")
     training_set_loss = {}
-    save_name = model_save_name(args.model, args.sn, args.mod, args.coeff, args.seed)
+    save_name = str(args.model) + str(args.seed)
     print("Model save name", save_name)
 
     for epoch in range(0, args.epoch):
