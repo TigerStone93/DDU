@@ -32,8 +32,6 @@ def training_args():
     parser.add_argument("--seed", type=int, dest="seed", required=True, help="Seed to use")
     parser.add_argument("--dataset", type=str, default=default_dataset, dest="dataset", help="dataset to train on",)
     parser.add_argument("--dataset-root", type=str, default=dataset_root, dest="dataset_root", help="path of a dataset (useful for dirty mnist)",)
-    parser.add_argument("--data-aug", action="store_true", dest="data_aug")
-    parser.set_defaults(data_aug=True)
 
     parser.add_argument("-b", type=int, default=train_batch_size, dest="train_batch_size", help="Batch size",)
 
