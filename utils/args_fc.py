@@ -27,7 +27,6 @@ def training_args():
     second_milestone = 250  # Milestone for change in lr
 
     model = "resnet18"
-    sn_coeff = 3.0
 
     parser = argparse.ArgumentParser(description="Args for training parameters", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
     parser.add_argument("--seed", type=int, dest="seed", required=True, help="Seed to use")
@@ -37,16 +36,9 @@ def training_args():
     parser.set_defaults(data_aug=True)
 
     parser.add_argument("-b", type=int, default=train_batch_size, dest="train_batch_size", help="Batch size",)
-    parser.add_argument("-tb", type=int, default=test_batch_size, dest="test_batch_size", help="Test Batch size",)
 
     parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
     parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
-
-    # parser.add_argument("-sn", action="store_true", dest="sn", help="whether to use spectral normalisation during training",)
-    # parser.set_defaults(sn=False)
-    # parser.add_argument("--coeff", type=float, default=sn_coeff, dest="coeff", help="Coeff parameter for spectral normalisation",)
-    # parser.add_argument("-mod", action="store_true", dest="mod", help="whether to use architectural modifications during training",)
-    # parser.set_defaults(mod=False)
 
     parser.add_argument("-e", type=int, default=epoch, dest="epoch", help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=learning_rate, dest="learning_rate", help="Learning rate",)
