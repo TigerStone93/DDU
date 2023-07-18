@@ -93,6 +93,17 @@ def get_train_valid_loader(batch_size, val_seed, val_size=0, num_workers=4, pin_
     error_msg = "[!] val_size should be in the range [0, 1]."
     assert (val_size >= 0) and (val_size <= 1), error_msg
 
+    lanes = [] # 여기서부터
+    with open("lane_town10.txt", "rt") as rf:
+        for line in rf.readlines():
+            lane = []
+            for s in line.split("\t"):
+                v = s.split(",")
+                if len(v) == 2:
+                    lane.append([float(v[0]), float(v[1])])
+            if len(lane) > 0:
+                lanes.append(np.array(lane))
+
     normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010],)
 
     # define transforms
