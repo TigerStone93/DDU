@@ -101,6 +101,8 @@ def get_train_valid_loader(batch_size, val_seed, val_size=0, num_workers=4, pin_
 
     # load the dataset
     record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # 여기서부터
+    record_index = list(range(1, np.shape(record)[0] - 50))
+    random.shuffle(record_index)
     
     data_dir = "./data"
     train_dataset = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=train_transform,)
