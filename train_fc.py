@@ -3,6 +3,7 @@ Script for training a single model for OOD detection.
 """
 
 import json
+import numpy as np
 import torch
 import argparse
 from torch import optim
@@ -78,7 +79,7 @@ def training_args():
 
 # ============================================================ #
 
-def get_train_valid_loader(batch_size, val_seed, val_size=0.1, num_workers=4, pin_memory=False, **kwargs):
+def get_train_valid_loader(batch_size, val_seed, val_size=0, num_workers=4, pin_memory=False, **kwargs):
     """
     Params:
     ------
@@ -99,6 +100,8 @@ def get_train_valid_loader(batch_size, val_seed, val_size=0.1, num_workers=4, pi
     valid_transform = transforms.Compose([transforms.ToTensor(), normalize,])
 
     # load the dataset
+    record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") #####
+    
     data_dir = "./data"
     train_dataset = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=train_transform,)
     valid_dataset = datasets.CIFAR10(root=data_dir, train=True, download=False, transform=valid_transform,)
