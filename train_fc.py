@@ -142,7 +142,7 @@ models = {
 
 if __name__ == "__main__":
     # Parsing arguments
-    args = training_args().parse_args() # utils.args training_args()
+    args = training_args().parse_args()
 
     # Setting seed
     print("Parsed args", args)
