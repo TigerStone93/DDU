@@ -17,9 +17,6 @@ import data.dirty_mnist as dirty_mnist
 # Import network models
 from net.resnet import resnet18, resnet50
 
-# Import train and validation utilities
-from utils.args import training_args
-
 # Tensorboard utilities
 from torch.utils.tensorboard import SummaryWriter
 
