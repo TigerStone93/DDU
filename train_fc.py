@@ -97,10 +97,7 @@ def get_train_valid_loader(batch_size, augment, val_seed, val_size=0.1, num_work
     # define transforms
     valid_transform = transforms.Compose([transforms.ToTensor(), normalize,])
 
-    if augment:
-        train_transform = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(), normalize,])
-    else:
-        train_transform = transforms.Compose([transforms.ToTensor(), normalize,])
+    train_transform = transforms.Compose([transforms.ToTensor(), normalize,])
 
     # load the dataset
     data_dir = "./data"
