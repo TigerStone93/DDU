@@ -19,13 +19,70 @@ from net.resnet import resnet18, resnet50
 
 # Import train and validation utilities
 from utils.args import training_args
-from utils.eval_utils import get_eval_stats
-from utils.train_utils import model_save_name
 
 # Tensorboard utilities
 from torch.utils.tensorboard import SummaryWriter
 
 # ========================================================================================== #
+
+def training_args():
+    default_dataset = "cifar10"
+    dataset_root = "./"
+    ood_dataset = "svhn"
+    train_batch_size = 128
+    test_batch_size = 128
+
+    learning_rate = 0.1
+    momentum = 0.9
+    optimizer = "sgd"
+    loss = "cross_entropy"
+    weight_decay = 5e-4
+    log_interval = 50
+    save_interval = 25
+    save_loc = "./"
+    saved_model_name = "resnet18_350.model"
+    epoch = 350
+    first_milestone = 150  # Milestone for change in lr
+    second_milestone = 250  # Milestone for change in lr
+
+    model = "resnet18"
+
+    parser = argparse.ArgumentParser(description="Args for training parameters", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
+    parser.add_argument("--seed", type=int, dest="seed", required=True, help="Seed to use")
+    parser.add_argument("--dataset", type=str, default=default_dataset, dest="dataset", help="dataset to train on",)
+    parser.add_argument("--dataset-root", type=str, default=dataset_root, dest="dataset_root", help="path of a dataset (useful for dirty mnist)",)
+    parser.add_argument("--data-aug", action="store_true", dest="data_aug")
+    parser.set_defaults(data_aug=True)
+
+    parser.add_argument("-b", type=int, default=train_batch_size, dest="train_batch_size", help="Batch size",)
+    parser.add_argument("-tb", type=int, default=test_batch_size, dest="test_batch_size", help="Test Batch size",)
+
+    parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
+    parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
+
+    parser.add_argument("-e", type=int, default=epoch, dest="epoch", help="Number of training epochs")
+    parser.add_argument("--lr", type=float, default=learning_rate, dest="learning_rate", help="Learning rate",)
+    parser.add_argument("--mom", type=float, default=momentum, dest="momentum", help="Momentum")
+    parser.add_argument("--nesterov", action="store_true", dest="nesterov", help="Whether to use nesterov momentum in SGD",)
+    parser.set_defaults(nesterov=False)
+    parser.add_argument("--decay", type=float, default=weight_decay, dest="weight_decay", help="Weight Decay",)
+    parser.add_argument("--opt", type=str, default=optimizer, dest="optimizer", help="Choice of optimisation algorithm",)
+
+    parser.add_argument("--loss", type=str, default=loss, dest="loss_function", help="Loss function to be used for training",)
+    parser.add_argument("--loss-mean", action="store_true", dest="loss_mean", help="whether to take mean of loss instead of sum to train",)
+    parser.set_defaults(loss_mean=False)
+
+    parser.add_argument("--log-interval", type=int, default=log_interval, dest="log_interval", help="Log Interval on Terminal",)
+    parser.add_argument("--save-interval", type=int, default=save_interval, dest="save_interval", help="Save Interval on Terminal",)
+    parser.add_argument("--saved_model_name", type=str, default=saved_model_name, dest="saved_model_name", help="file name of the pre-trained model",)
+    parser.add_argument("--save-path", type=str, default=save_loc, dest="save_loc", help="Path to export the model",)
+
+    parser.add_argument("--first-milestone", type=int, default=first_milestone, dest="first_milestone", help="First milestone to change lr",)
+    parser.add_argument("--second-milestone", type=int, default=second_milestone, dest="second_milestone", help="Second milestone to change lr",)
+
+    return parser
+
+# ============================================================ #
 
 def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
     log_interval = 10
