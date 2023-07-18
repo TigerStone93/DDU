@@ -100,7 +100,7 @@ def get_train_valid_loader(batch_size, val_seed, val_size=0, num_workers=4, pin_
     valid_transform = transforms.Compose([transforms.ToTensor(), normalize,])
 
     # load the dataset
-    record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") #####
+    record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # 여기서부터
     
     data_dir = "./data"
     train_dataset = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=train_transform,)
@@ -130,9 +130,9 @@ def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_funct
     model.train()
     train_loss = 0
     num_samples = 0
-    for batch_idx, (data, labels) in enumerate(train_loader):
+    for batch_idx, (data, labels) in enumerate(train_loader): # 데이터셋을 가지고
         data = data.to(device)
-        labels = labels.to(device)
+        labels = labels.to(device) # label
 
         optimizer.zero_grad()
 
