@@ -95,14 +95,12 @@ def get_train_valid_loader(batch_size, augment, val_seed, val_size=0.1, num_work
     normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010],)
 
     # define transforms
-    valid_transform = transforms.Compose([transforms.ToTensor(), normalize,])
-
     train_transform = transforms.Compose([transforms.ToTensor(), normalize,])
+    valid_transform = transforms.Compose([transforms.ToTensor(), normalize,])
 
     # load the dataset
     data_dir = "./data"
     train_dataset = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=train_transform,)
-
     valid_dataset = datasets.CIFAR10(root=data_dir, train=True, download=False, transform=valid_transform,)
 
     num_train = len(train_dataset)
