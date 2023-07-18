@@ -55,7 +55,6 @@ def training_args():
     parser.set_defaults(data_aug=True)
 
     parser.add_argument("-b", type=int, default=train_batch_size, dest="train_batch_size", help="Batch size",)
-    parser.add_argument("-tb", type=int, default=test_batch_size, dest="test_batch_size", help="Test Batch size",)
 
     parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
     parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
