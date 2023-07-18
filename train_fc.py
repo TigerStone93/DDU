@@ -78,7 +78,7 @@ def training_args():
 
 # ============================================================ #
 
-def get_train_valid_loader(batch_size, augment, val_seed, val_size=0.1, num_workers=4, pin_memory=False, **kwargs):
+def get_train_valid_loader(batch_size, val_seed, val_size=0.1, num_workers=4, pin_memory=False, **kwargs):
     """
     Params:
     ------
@@ -205,7 +205,6 @@ if __name__ == "__main__":
     train_loader, _ = dataset_loader[args.dataset].get_train_valid_loader(
         root=args.dataset_root,
         batch_size=args.train_batch_size,
-        augment=args.data_aug,
         val_size=0.1,
         val_seed=args.seed,
         pin_memory=args.gpu,)
