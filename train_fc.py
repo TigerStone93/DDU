@@ -80,6 +80,55 @@ def training_args():
 
 # ============================================================ #
 
+def get_train_valid_loader(batch_size, augment, val_seed, val_size=0.1, num_workers=4, pin_memory=False, **kwargs):
+    """
+    Params:
+    ------
+    - batch_size: how many samples per batch to load.
+    - augment: whether to apply the data augmentation scheme mentioned in the paper. Only applied on the train split.
+    - val_seed: fix seed for reproducibility.
+    - val_size: percentage split of the training set used for the validation set. Should be a float in the range [0, 1].
+    - num_workers: number of subprocesses to use when loading the dataset.
+    - pin_memory: whether to copy tensors into CUDA pinned memory. Set it to True if using GPU.
+    """
+    error_msg = "[!] val_size should be in the range [0, 1]."
+    assert (val_size >= 0) and (val_size <= 1), error_msg
+
+    normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010],)
+
+    # define transforms
+    valid_transform = transforms.Compose([transforms.ToTensor(), normalize,])
+
+    if augment:
+        train_transform = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(), normalize,])
+    else:
+        train_transform = transforms.Compose([transforms.ToTensor(), normalize,])
+
+    # load the dataset
+    data_dir = "./data"
+    train_dataset = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=train_transform,)
+
+    valid_dataset = datasets.CIFAR10(root=data_dir, train=True, download=False, transform=valid_transform,)
+
+    num_train = len(train_dataset)
+    indices = list(range(num_train))
+    split = int(np.floor(val_size * num_train))
+
+    np.random.seed(val_seed)
+    np.random.shuffle(indices)
+
+    train_idx, valid_idx = indices[split:], indices[:split]
+
+    train_subset = Subset(train_dataset, train_idx)
+    valid_subset = Subset(valid_dataset, valid_idx)
+
+    train_loader = torch.utils.data.DataLoader(train_subset, batch_size=batch_size, num_workers=num_workers, pin_memory=pin_memory, shuffle=True,)
+    valid_loader = torch.utils.data.DataLoader(valid_subset, batch_size=batch_size, num_workers=num_workers, pin_memory=pin_memory, shuffle=False,)
+
+    return (train_loader, valid_loader)
+
+# ============================================================ #
+
 def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
     log_interval = 10
     model.train()
