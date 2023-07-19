@@ -170,8 +170,9 @@ if __name__ == "__main__":
                     lane.append([float(v[0]), float(v[1])])
             if len(lane) > 0:
                 lanes.append(np.array(lane))
-    
-    map = np.full((4096, 4096, 3), 0, np.uint8)
+
+    map_background_grayscale = 0 # black
+    map = np.full((4096, 4096, 3), map_background_grayscale, np.uint8)
     compensator = np.array([200, 256])
     for lane in lanes:
         for i, _ in enumerate(lane[:-1]):
@@ -212,7 +213,7 @@ if __name__ == "__main__":
                 M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
-                map_array.append(map_rotated.astype(np.float32) / 255.0)
+                map_array.append(map_rotated.astype(np.float32) / 255.0) # edited
         
         train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
         training_set_loss[epoch] = train_loss
