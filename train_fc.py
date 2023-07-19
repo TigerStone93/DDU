@@ -215,7 +215,7 @@ if __name__ == "__main__":
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
                 map_array.append(map_rotated.astype(np.float32) / 255.0) # edited
         
-            train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터
+            train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
             training_set_loss[epoch] = train_loss
             writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
 
