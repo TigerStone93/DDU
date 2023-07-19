@@ -211,7 +211,8 @@ if __name__ == "__main__":
                 M2 = np.append(M2, np.float32([[0, 0, 1]]), axis=0)
                 M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
-                rotated = cv2.warpAffine(screen_copied, M[:2], (map_cropping_size, map_cropping_size))
+                map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
+                map_array.append(map_rotated.astype(np.float32) / 255.)
         
         train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
         training_set_loss[epoch] = train_loss
