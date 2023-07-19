@@ -215,17 +215,17 @@ if __name__ == "__main__":
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
                 map_array.append(map_rotated.astype(np.float32) / 255.0) # edited
         
-        train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
-        training_set_loss[epoch] = train_loss
-        writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
+            train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터
+            training_set_loss[epoch] = train_loss
+            writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
 
-        # Decaying learning_rate in every epoch.
-        scheduler.step()
-
-        # Saving model
-        if (epoch + 1) % args.save_interval == 0:
-            saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
-            torch.save(net.state_dict(), saved_name)
+            # Decaying learning_rate in every epoch.
+            scheduler.step()
+    
+            # Saving model
+            if (epoch + 1) % args.save_interval == 0:
+                saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
+                torch.save(net.state_dict(), saved_name)
 
     # Saving model
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
