@@ -200,18 +200,18 @@ if __name__ == "__main__":
             current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] x number of vehicles
             
             for cr in current_record:
-                cv2.circle(screen_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
+                cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
 
-            screen_array = []
+            map_array = []
+            map_cropping_size = 300
             for cr in cur_record:
                 position = (cr[:2] + compensator) * 8.
-                #pos = (int(pos[0]), int(pos[1]))
                 M1 = np.float32( [ [1, 0, -position[0]], [0, 1, -position[1]], [0, 0, 1] ] )
                 M2 = cv2.getRotationMatrix2D((0, 0), s[2] + 90, 1.0)
                 M2 = np.append(M2, np.float32([[0, 0, 1]]), axis=0)
-                M3 = np.float32( [ [1, 0, 150], [0, 1, 225], [0, 0, 1] ] )
+                M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
-                rotated = cv2.warpAffine(screen_copied, M[:2], (300, 300))
+                rotated = cv2.warpAffine(screen_copied, M[:2], (map_cropping_size, map_cropping_size))
         
         train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
         training_set_loss[epoch] = train_loss
