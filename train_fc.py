@@ -80,71 +80,6 @@ def training_args():
 
 # ============================================================ #
 
-def get_train_valid_loader(batch_size, val_seed, val_size=0, num_workers=4, pin_memory=False, **kwargs):
-    """
-    Params:
-    ------
-    - batch_size: how many samples per batch to load.
-    - augment: whether to apply the data augmentation scheme mentioned in the paper. Only applied on the train split.
-    - val_seed: fix seed for reproducibility.
-    - val_size: percentage split of the training set used for the validation set. Should be a float in the range [0, 1].
-    - num_workers: number of subprocesses to use when loading the dataset.
-    - pin_memory: whether to copy tensors into CUDA pinned memory. Set it to True if using GPU.
-    """
-    error_msg = "[!] val_size should be in the range [0, 1]."
-    assert (val_size >= 0) and (val_size <= 1), error_msg
-
-    # Loading 
-    lanes = []
-    with open("lane_town03.txt", "rt") as rf:
-        for line in rf.readlines():
-            lane = []
-            for s in line.split("\t"):
-                v = s.split(",")
-                if len(v) == 2:
-                    lane.append([float(v[0]), float(v[1])])
-            if len(lane) > 0:
-                lanes.append(np.array(lane))
-    
-    screen = np.full((4096, 4096, 3), 128, np.uint8)
-    loctr = np.array([256, 216])
-    for lane in lanes:
-        for i, _ in enumerate(lane[:-1]):
-            dx = lane[i+1][0] - lane[i][0]
-            dy = lane[i+1][1] - lane[i][1]
-            r = np.sqrt(dx * dx + dy * dy)
-            if r > 0.1:
-                color = ( int(dx * 127 / r + 128), 128, int(dy * 127 / r + 128) )
-                cv2.line(screen, ((lane[i] + loctr) * 8.).astype(np.int32), ((lane[i+1] + loctr) * 8.).astype(np.int32), color, 4)
-
-    # load the dataset
-    record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # 여기서부터
-    record_index = list(range(1, np.shape(record)[0] - 50))
-    random.shuffle(record_index)
-    
-    data_dir = "./data"
-    train_dataset = datasets.CIFAR10(root=data_dir, train=True, download=True, transform=train_transform,)
-    valid_dataset = datasets.CIFAR10(root=data_dir, train=True, download=False, transform=valid_transform,)
-
-    num_train = len(train_dataset)
-    indices = list(range(num_train))
-    split = int(np.floor(val_size * num_train))
-
-    np.random.seed(val_seed)
-    np.random.shuffle(indices)
-
-    train_idx, valid_idx = indices[split:], indices[:split]
-
-    train_subset = Subset(train_dataset, train_idx)
-    valid_subset = Subset(valid_dataset, valid_idx)
-
-    train_loader = torch.utils.data.DataLoader(train_subset, batch_size=batch_size, num_workers=num_workers, pin_memory=pin_memory, shuffle=True,)
-    valid_loader = torch.utils.data.DataLoader(valid_subset, batch_size=batch_size, num_workers=num_workers, pin_memory=pin_memory, shuffle=False,)
-
-    return (train_loader, valid_loader)
-
-# ============================================================ #
-
 def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
     log_interval = 10
     model.train()
@@ -224,14 +159,29 @@ if __name__ == "__main__":
         optimizer = optim.Adam(opt_params, lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1)
 
-    # Loading train dataset
-    train_loader, _ = dataset_loader[args.dataset].get_train_valid_loader(
-        root=args.dataset_root,
-        batch_size=args.train_batch_size,
-        val_size=0.1,
-        val_seed=args.seed,
-        pin_memory=args.gpu,)
-
+    # Loading image dataset for training
+    lanes = []
+    with open("lane_town03.txt", "rt") as rf:
+        for line in rf.readlines():
+            lane = []
+            for s in line.split("\t"):
+                v = s.split(",")
+                if len(v) == 2:
+                    lane.append([float(v[0]), float(v[1])])
+            if len(lane) > 0:
+                lanes.append(np.array(lane))
+    
+    map = np.full((4096, 4096, 3), 256, np.uint8)
+    compensator = np.array([200, 256])
+    for lane in lanes:
+        for i, _ in enumerate(lane[:-1]):
+            dx = lane[i+1][0] - lane[i][0]
+            dy = lane[i+1][1] - lane[i][1]
+            r = np.sqrt(dx * dx + dy * dy)
+            if r > 0.1:
+                color = ( int(dx * 127 / r + 128), 128, int(dy * 127 / r + 128) )
+                cv2.line(map, ((lane[i] + compensator) * 8.).astype(np.int32), ((lane[i+1] + compensator) * 8.).astype(np.int32), color, 4)
+    
     # Creating summary writer in tensorboard
     writer = SummaryWriter(args.save_loc + "stats_logging/")
     training_set_loss = {}
@@ -240,6 +190,29 @@ if __name__ == "__main__":
 
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
+        
+        # Loading matrix dataset for training
+        record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy")
+        record_index = list(range(1, np.shape(record)[0] - 50))
+        random.shuffle(record_index)
+        for step in record_index[:100]:
+            map_copied = map.copy()
+            current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] x number of vehicles
+            
+            for cr in current_record:
+                cv2.circle(screen_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
+
+            screen_array = []
+            for cr in cur_record:
+                position = (cr[:2] + compensator) * 8.
+                #pos = (int(pos[0]), int(pos[1]))
+                M1 = np.float32( [ [1, 0, -position[0]], [0, 1, -position[1]], [0, 0, 1] ] )
+                M2 = cv2.getRotationMatrix2D((0, 0), s[2] + 90, 1.0)
+                M2 = np.append(M2, np.float32([[0, 0, 1]]), axis=0)
+                M3 = np.float32( [ [1, 0, 150], [0, 1, 225], [0, 0, 1] ] )
+                M = np.matmul(np.matmul(M3, M2), M1)
+                rotated = cv2.warpAffine(screen_copied, M[:2], (300, 300))
+        
         train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,)
         training_set_loss[epoch] = train_loss
         writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
