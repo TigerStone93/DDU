@@ -4,6 +4,7 @@ Script for training a single model for OOD detection.
 
 import json
 import numpy as np
+import cv2
 import torch
 import argparse
 from torch import optim
@@ -93,8 +94,9 @@ def get_train_valid_loader(batch_size, val_seed, val_size=0, num_workers=4, pin_
     error_msg = "[!] val_size should be in the range [0, 1]."
     assert (val_size >= 0) and (val_size <= 1), error_msg
 
-    lanes = [] # 여기서부터
-    with open("lane_town10.txt", "rt") as rf:
+    # Loading 
+    lanes = []
+    with open("lane_town03.txt", "rt") as rf:
         for line in rf.readlines():
             lane = []
             for s in line.split("\t"):
@@ -103,12 +105,17 @@ def get_train_valid_loader(batch_size, val_seed, val_size=0, num_workers=4, pin_
                     lane.append([float(v[0]), float(v[1])])
             if len(lane) > 0:
                 lanes.append(np.array(lane))
-
-    normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010],)
-
-    # define transforms
-    train_transform = transforms.Compose([transforms.ToTensor(), normalize,])
-    valid_transform = transforms.Compose([transforms.ToTensor(), normalize,])
+    
+    screen = np.full((4096, 4096, 3), 128, np.uint8)
+    loctr = np.array([256, 216])
+    for lane in lanes:
+        for i, _ in enumerate(lane[:-1]):
+            dx = lane[i+1][0] - lane[i][0]
+            dy = lane[i+1][1] - lane[i][1]
+            r = np.sqrt(dx * dx + dy * dy)
+            if r > 0.1:
+                color = ( int(dx * 127 / r + 128), 128, int(dy * 127 / r + 128) )
+                cv2.line(screen, ((lane[i] + loctr) * 8.).astype(np.int32), ((lane[i+1] + loctr) * 8.).astype(np.int32), color, 4)
 
     # load the dataset
     record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # 여기서부터
