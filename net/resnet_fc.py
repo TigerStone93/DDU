@@ -100,7 +100,6 @@ class ResNet(nn.Module):
     def __init__(
         self,
         block,
-        num_blocks,
         num_outputs = 10,):
         super(ResNet, self).__init__()
 
