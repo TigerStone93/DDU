@@ -5,6 +5,8 @@ Script for training a single model for OOD detection.
 import json
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import torch
 import argparse
 from torch import optim
@@ -200,7 +202,7 @@ if __name__ == "__main__":
         random.shuffle(record_index)
         for step in record_index[:100]:
             map_copied = map.copy()
-            current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] x number of vehicles, x,y: meter, yaw: -180~180deg, v: m/s
+            current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] * number_of_vehicles, x,y: meter, yaw: -180~180deg, v: m/s
             
             for cr in current_record:
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
@@ -215,9 +217,9 @@ if __name__ == "__main__":
                 M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
-                map_array.append(map_rotated.astype(np.float32) / 128.0 - 1.0) # edited
+                map_array.append(map_rotated.astype(np.float32) / 128.0 - 1.0) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
 
-            grid = np.zeros((35, 35))
+            grid_size = 35
             # positive yaw: counterclockwise, negative yaw: clockwise
         
             train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
