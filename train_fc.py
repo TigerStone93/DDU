@@ -161,7 +161,7 @@ if __name__ == "__main__":
         optimizer = optim.Adam(opt_params, lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1)
 
-    # Loading image dataset for training
+    # Drawing map image for training
     lanes = []
     with open("lane_town03.txt", "rt") as rf:
         for line in rf.readlines():
@@ -173,8 +173,7 @@ if __name__ == "__main__":
             if len(lane) > 0:
                 lanes.append(np.array(lane))
 
-    map_background_grayscale = 0 # black
-    map = np.full((4096, 4096, 3), map_background_grayscale, np.uint8)
+    map = np.full((4096, 4096, 3), 128, np.uint8)
     compensator = np.array([200, 256])
     for lane in lanes:
         for i, _ in enumerate(lane[:-1]):
@@ -203,10 +202,10 @@ if __name__ == "__main__":
         for step in record_index[:100]:
             map_copied = map.copy()
             current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] * number_of_vehicles, x,y: meter, yaw: -180~180deg, v: m/s
-            
+
+            # 
             for cr in current_record:
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
-
             map_array = []
             map_cropping_size = 300
             for cr in current_record:
