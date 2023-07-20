@@ -196,12 +196,13 @@ if __name__ == "__main__":
         print("Starting epoch", epoch)
         
         # Loading matrix dataset for training
-        record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy")
+        record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index)
         for step in record_index[:100]:
             map_copied = map.copy()
-            current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] * number_of_vehicles, x,y: meter, yaw: -180~180deg, v: m/s
+            current_record = record[step] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
+            ###
 
             # 
             for cr in current_record:
