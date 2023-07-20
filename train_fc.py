@@ -80,7 +80,7 @@ def training_args():
 
 # ============================================================ #
 
-def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
+def train_single_epoch(epoch, model, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
     log_interval = 10
     model.train()
     train_loss = 0
@@ -213,9 +213,43 @@ if __name__ == "__main__":
                 M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
-                map_array.append(map_rotated.astype(np.float32) / 255.0) # edited
+                map_array.append(map_rotated.astype(np.float32) / 128.0 - 1.0) # edited
         
-            train_loss = train_single_epoch(epoch, net, train_loader, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
+            train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
+
+            ###
+            map_array_tensor = torch.tensor(map_array)
+            current_record_tensor = torch.tensor(current_record)
+            #label_tensor = torch.tensor(label)
+            dataset = TensorDataset(map_array_tensor, current_record_tensor)
+            
+            log_interval = 10
+            net.train()
+            train_loss = 0
+            num_samples = 0
+            for ma, cr, l in enumerate(map_array, current_record, label)
+            
+            for batch_idx, (data, labels) in enumerate(train_loader): # 데이터셋을 가지고
+                data = data.to(device)
+                labels = labels.to(device) # label
+        
+                optimizer.zero_grad()
+        
+                logits = net(data)
+                loss = loss_function_dict[loss_function](logits, labels)
+        
+                if loss_mean:
+                    loss = loss / len(data)
+        
+                loss.backward()
+                train_loss += loss.item()
+                optimizer.step()
+                num_samples += len(data)
+        
+                if batch_idx % log_interval == 0:
+                    print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
+            ###
+            
             training_set_loss[epoch] = train_loss
             writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
 
