@@ -189,6 +189,8 @@ if __name__ == "__main__":
     save_name = str(args.model) + str(args.seed)
     print("Model save name", save_name)
 
+    # ============================== #
+    
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
         
@@ -198,14 +200,14 @@ if __name__ == "__main__":
         random.shuffle(record_index)
         for step in record_index[:100]:
             map_copied = map.copy()
-            current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] x number of vehicles
+            current_record = record[step] # [location.x, locataion.y, rotation.yaw, v.x, v.y] x number of vehicles, x,y: meter, yaw: -180~180deg, v: m/s
             
             for cr in current_record:
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
 
             map_array = []
             map_cropping_size = 300
-            for cr in cur_record:
+            for cr in current_record:
                 position = (cr[:2] + compensator) * 8.
                 M1 = np.float32( [ [1, 0, -position[0]], [0, 1, -position[1]], [0, 0, 1] ] )
                 M2 = cv2.getRotationMatrix2D((0, 0), s[2] + 90, 1.0)
@@ -214,6 +216,9 @@ if __name__ == "__main__":
                 M = np.matmul(np.matmul(M3, M2), M1)
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
                 map_array.append(map_rotated.astype(np.float32) / 128.0 - 1.0) # edited
+
+            grid = np.zeros((35, 35))
+            # positive yaw: counterclockwise, negative yaw: clockwise
         
             train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
 
