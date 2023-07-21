@@ -47,7 +47,7 @@ models = {"resnet50": resnet50, "wide_resnet": wrn, "vgg16": vgg16}
 
 model_to_num_dim = {"resnet50": 2048, "wide_resnet": 640, "vgg16": 512}
 
-# ============================================================ #
+# ========================================================================================== #
 
 if __name__ == "__main__":
     args = eval_args().parse_args()
@@ -257,6 +257,8 @@ if __name__ == "__main__":
     std_t_m2_auroc = torch.std(t_m2_auroc_tensor) / math.sqrt(t_m2_auroc_tensor.shape[0])
     std_t_m2_auprc = torch.std(t_m2_auprc_tensor) / math.sqrt(t_m2_auprc_tensor.shape[0])
 
+    # ============================== #
+    
     res_dict = {}
     res_dict["mean"] = {}
     res_dict["mean"]["accuracy"] = mean_accuracy.item()
