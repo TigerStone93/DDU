@@ -20,11 +20,7 @@ from net.wide_resnet import wrn
 from net.vgg import vgg16
 
 # Import metrics to compute
-from metrics.classification_metrics import (
-    test_classification_net,
-    test_classification_net_logits,
-    test_classification_net_ensemble
-)
+from metrics.classification_metrics import test_classification_net, test_classification_net_logits, test_classification_net_ensemble
 from metrics.calibration_metrics import expected_calibration_error
 from metrics.uncertainty_confidence import entropy, logsumexp
 from metrics.ood_metrics import get_roc_auc, get_roc_auc_logits, get_roc_auc_ensemble
@@ -316,16 +312,5 @@ if __name__ == "__main__":
 
     res_dict["info"] = vars(args)
 
-    with open(
-        "res_"
-        + model_save_name(args.model, args.sn, args.mod, args.coeff, args.seed)
-        + "_"
-        + args.model_type
-        + "_"
-        + args.dataset
-        + "_"
-        + args.ood_dataset
-        + ".json",
-        "w",
-    ) as f:
+    with open("res_"+model_save_name(args.model, args.sn, args.mod, args.coeff, args.seed)+"_"+args.model_type+"_"+args.dataset+"_"+args.ood_dataset+".json", "w",) as f:
         json.dump(res_dict, f)
