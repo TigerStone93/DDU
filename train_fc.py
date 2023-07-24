@@ -195,16 +195,40 @@ if __name__ == "__main__":
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
         
-        # Loading matrix dataset for training
+        # Loading matrix dataset for preprocessing
         record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index)
         for step in record_index[:100]:
             map_copied = map.copy()
             current_record = record[step] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
+            current_xy = current_record[:, :2]
+            current_yaw = np.reshape(current_record[:, 2], (265, 1))
+            after_10_xy = record[step+10, :, :2]        
+            after_30_xy = record[step+30, :, :2]
+            after_50_xy = record[step+50, :, :2]
+            combined_record = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
+            
+            grid_array = []
+            for cr in combined_record:                
+                current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
+                dx_10 = after_10_x - x
+                dy_10 = after_10_y - y
+                dx_30 = after_30_x - x
+                dy_30 = after_30_y - y
+                dx_50 = after_50_x - x
+                dy_50 = after_50_y - y
+                yaw_radian = np.radians(yaw)
+                after_10_x_rotated = -dx_10 * np.sin(yaw_radian) + dy_10 * np.cos(yaw_radian)
+                after_10_y_rotated = dx_10 * np.cos(yaw_radian) + dy_10 * np.sin(yaw_radian)                
+                after_30_x_rotated = -dx_30 * np.sin(yaw_radian) + dy_30 * np.cos(yaw_radian)
+                after_30_y_rotated = dx_30 * np.cos(yaw_radian) + dy_30 * np.sin(yaw_radian)                
+                after_50_x_rotated = -dx_50 * np.sin(yaw_radian) + dy_50 * np.cos(yaw_radian)
+                after_50_y_rotated = dx_50 * np.cos(yaw_radian) + dy_50 * np.sin(yaw_radian)                
+                
             ###
 
-            # 
+            # map
             for cr in current_record:
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
             map_array = []
@@ -219,7 +243,9 @@ if __name__ == "__main__":
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
                 map_array.append(map_rotated.astype(np.float32) / 128.0 - 1.0) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
 
-            grid_size = 35
+            grid_size = (87, 87)
+            checkerboard = np.indices(grid_size).sum(axis=0) % 2
+            
             # positive yaw: counterclockwise, negative yaw: clockwise
         
             train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
@@ -234,7 +260,8 @@ if __name__ == "__main__":
             net.train()
             train_loss = 0
             num_samples = 0
-            for ma, cr, l in enumerate(map_array, current_record, label)
+            for ma, cr, l in enumerate(map_array, current_record, label):
+                pass
             
             for batch_idx, (data, labels) in enumerate(train_loader): # 데이터셋을 가지고
                 data = data.to(device)
