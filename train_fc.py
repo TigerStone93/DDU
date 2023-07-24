@@ -7,10 +7,11 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import torch
 import argparse
+import torch
 from torch import optim
 import torch.backends.cudnn as cudnn
+from torch.nn import functional as F
 
 # Import dataloaders
 import data.ood_detection.cifar10 as cifar10
@@ -79,36 +80,6 @@ def training_args():
     parser.add_argument("--second-milestone", type=int, default=second_milestone, dest="second_milestone", help="Second milestone to change lr",)
 
     return parser
-
-# ============================================================ #
-
-def train_single_epoch(epoch, model, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
-    log_interval = 10
-    model.train()
-    train_loss = 0
-    num_samples = 0
-    for batch_idx, (data, labels) in enumerate(train_loader): # 데이터셋을 가지고
-        data = data.to(device)
-        labels = labels.to(device) # label
-
-        optimizer.zero_grad()
-
-        logits = model(data)
-        loss = loss_function_dict[loss_function](logits, labels)
-
-        if loss_mean:
-            loss = loss / len(data)
-
-        loss.backward()
-        train_loss += loss.item()
-        optimizer.step()
-        num_samples += len(data)
-
-        if batch_idx % log_interval == 0:
-            print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
-
-    print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss / num_samples))
-    return train_loss / num_samples
 
 # ========================================================================================== #
 
@@ -302,19 +273,20 @@ if __name__ == "__main__":
             map_input_tensor = torch.tensor(map_input_array) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             record_input_tensor = torch.tensor(current_record) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_tensor = torch.tensor(grid_label_array) # (number_of_vehicles, grid_size[0], grid_size[1])
+            """
             dataset = TensorDataset(map_input_tensor, record_input_tensor, grid_label_tensor)
             dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
             for map_input, record_input, grid_label in dataloader:
                 pass
+            """
 
             ### train_single_epoch
             # def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
-            log_interval = 10
-            log_interval = 10
+            #log_interval = 10
             net.train()
             train_loss = 0
             num_samples = 0
-            for ma, cr, l in enumerate(map_array, current_record, label):
+            for ma, cr, l in enumerate(map_input_tensor, current_record, label):
                 pass
             
             for batch_idx, (data, labels) in enumerate(train_loader): # 데이터셋을 가지고
@@ -324,9 +296,9 @@ if __name__ == "__main__":
                 optimizer.zero_grad()
         
                 logits = net(data)
-                loss = loss_function_dict[loss_function](logits, labels)
+                loss = F.cross_entropy(logits, labels)
         
-                if loss_mean:
+                if args.loss_mean:
                     loss = loss / len(data)
         
                 loss.backward()
