@@ -192,6 +192,9 @@ if __name__ == "__main__":
 
     # ============================== #
     
+    grid_size = (91, 91) # 0/45/90 0/30/60/90 0/42/84 0/28/56/84
+    checkerboard = np.indices(grid_size).sum(axis=0) % 2
+    custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
         
@@ -224,7 +227,8 @@ if __name__ == "__main__":
                 after_30_x_rotated = -dx_30 * np.sin(yaw_radian) + dy_30 * np.cos(yaw_radian)
                 after_30_y_rotated = dx_30 * np.cos(yaw_radian) + dy_30 * np.sin(yaw_radian)                
                 after_50_x_rotated = -dx_50 * np.sin(yaw_radian) + dy_50 * np.cos(yaw_radian)
-                after_50_y_rotated = dx_50 * np.cos(yaw_radian) + dy_50 * np.sin(yaw_radian)                
+                after_50_y_rotated = dx_50 * np.cos(yaw_radian) + dy_50 * np.sin(yaw_radian)
+                
                 
             ###
 
@@ -243,8 +247,6 @@ if __name__ == "__main__":
                 map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
                 map_array.append(map_rotated.astype(np.float32) / 128.0 - 1.0) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
 
-            grid_size = (87, 87)
-            checkerboard = np.indices(grid_size).sum(axis=0) % 2
             
             # positive yaw: counterclockwise, negative yaw: clockwise
         
