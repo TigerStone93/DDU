@@ -192,10 +192,7 @@ if __name__ == "__main__":
 
     # ============================== #
     
-    grid_size = (91, 91) # 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84
-    checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
-    custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
-    
+    grid_size = (91, 91) # 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
         
@@ -203,20 +200,23 @@ if __name__ == "__main__":
         record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index)
+        # Sampling index and 100 vehicles
         for step in record_index[:100]:
             map_copied = map.copy()
             current_record = record[step] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
             current_xy = current_record[:, :2]
-            current_yaw = np.reshape(current_record[:, 2], (265, 1))
+            current_yaw = np.reshape(current_record[:, 2], (265, 1)) # positive yaw: counterclockwise, negative yaw: clockwise
             after_10_xy = record[step+10, :, :2]        
             after_30_xy = record[step+30, :, :2]
             after_50_xy = record[step+50, :, :2]
             combined_record = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
-            
-            grid_array = []
+
+            # Generating grid labels by preprocessing
+            grid_label_array = []
             for cr in combined_record:                
                 current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
-                
+
+                # Rotating heading of vehicle to align with center-top cell of grid
                 dx_10 = after_10_x - x
                 dy_10 = after_10_y - y
                 dx_30 = after_30_x - x
@@ -232,44 +232,50 @@ if __name__ == "__main__":
                 after_50_y_rotated = dx_50 * np.cos(yaw_radian) + dy_50 * np.sin(yaw_radian)
 
                 grid_after_10_x = int(grid_size[0] // 2 + round(after_10_x_rotated))
-                grid_after_10_y = int(grid_size[1] // 2 + round(after_10_y_rotated))                
+                grid_after_10_y = int(grid_size[1] // 2 + round(after_10_y_rotated))
                 grid_after_30_x = int(grid_size[0] // 2 + round(after_30_x_rotated))
-                grid_after_30_y = int(grid_size[1] // 2 + round(after_30_y_rotated))                
+                grid_after_30_y = int(grid_size[1] // 2 + round(after_30_y_rotated))
                 grid_after_50_x = int(grid_size[0] // 2 + round(after_50_x_rotated))
                 grid_after_50_y = int(grid_size[1] // 2 + round(after_50_y_rotated))
 
-                print(f"After 10 : ({grid_after_10_x}, {grid_after_10_y})    After 30 : ({grid_after_30_x}, {grid_after_30_y})    After 50 : ({grid_after_50_x}, {grid_after_50_y})")
-                
+                """
+                print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
+                """
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
-                    raise ValueError("Location after 10 timestep is outside the grid")
+                    raise ValueError(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid")
                 if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
-                    raise ValueError("Location after 30 timestep is outside the grid")
+                    raise ValueError(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid")
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
-                    raise ValueError("Location after 50 timestep is outside the grid")
+                    raise ValueError(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid")
 
-                grid = np.zeros(grid_size)
-                
-                grid[grid_after_10_x, grid_after_10_y] = 1
-                grid[grid_after_30_x, grid_after_30_y] = 1
-                grid[grid_after_50_x, grid_after_50_y] = 1
+                # Saving grid label by stacking as array
+                grid_label = np.zeros(grid_size)
+                grid_label[grid_after_10_x, grid_after_10_y] = 1
+                grid_label[grid_after_30_x, grid_after_30_y] = 1
+                grid_label[grid_after_50_x, grid_after_50_y] = 1
+                grid_label_array.append(grid_label)
 
+                # Visualizing grid label
+                """
                 if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
                     pass
-                else:
+                else:                
+                    checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
+                    custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
                     fig, ax = plt.subplots(figsize=(10, 10))
                     ax.imshow(checkerboard_background, cmap=custom_color_map, origin='lower')
                     ax.plot(grid_size[0] // 2, grid_size[1] // 2, 'ro')
                     ax.plot(grid_after_10_x, grid_after_10_y, 'yo')
                     ax.plot(grid_after_30_x, grid_after_30_y, 'go')
-                    ax.plot(grid_after_50_x, grid_after_50_y, 'bo')
-                    
-                
-            ###
-
-            # map
+                    ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
+                    plt.show()
+            print("grid_label_array shape :", np.array(grid_label_array).shape)
+            """
+            
+            # Generating map inputs by preprocessing
             for cr in current_record:
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
-            map_array = []
+            map_input_array = []
             map_cropping_size = 300
             for cr in current_record:
                 position = (cr[:2] + compensator) * 8.
@@ -278,12 +284,18 @@ if __name__ == "__main__":
                 M2 = np.append(M2, np.float32([[0, 0, 1]]), axis=0)
                 M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
-                map_rotated = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
-                map_array.append(map_rotated.astype(np.float32) / 128.0 - 1.0) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
+                map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
+                map_input_array.append(map_rotated_n_cropped.astype(np.float32) / 128.0 - 1.0) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
+                
+                # Visualizing map
+                """
+                map_rotated_n_cropped = cv2.cvtColor(map_rotated_n_cropped, cv2.COLOR_BGR2RGB)
+                plt.imshow(map_rotated_n_cropped)
+                plt.axis('off')
+                plt.show()
+            print("map_input_array shape :", np.array(map_input_array).shape)
+            """
 
-            
-            # positive yaw: counterclockwise, negative yaw: clockwise
-        
             train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
 
             ###
