@@ -200,7 +200,7 @@ if __name__ == "__main__":
         record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index)
-        # Sampling index and 100 vehicles
+        # Sampling 100 indexes from 0 to 4950
         for step in record_index[:100]:
             map_copied = map.copy()
             current_record = record[step] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
