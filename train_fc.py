@@ -192,9 +192,10 @@ if __name__ == "__main__":
 
     # ============================== #
     
-    grid_size = (91, 91) # 0/45/90 0/30/60/90 0/42/84 0/28/56/84
-    checkerboard = np.indices(grid_size).sum(axis=0) % 2
+    grid_size = (91, 91) # 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84
+    checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
     custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
+    
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
         
@@ -215,20 +216,53 @@ if __name__ == "__main__":
             grid_array = []
             for cr in combined_record:                
                 current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
+                
                 dx_10 = after_10_x - x
                 dy_10 = after_10_y - y
                 dx_30 = after_30_x - x
                 dy_30 = after_30_y - y
                 dx_50 = after_50_x - x
                 dy_50 = after_50_y - y
-                yaw_radian = np.radians(yaw)
+                yaw_radian = np.radians(yaw)                
                 after_10_x_rotated = -dx_10 * np.sin(yaw_radian) + dy_10 * np.cos(yaw_radian)
                 after_10_y_rotated = dx_10 * np.cos(yaw_radian) + dy_10 * np.sin(yaw_radian)                
                 after_30_x_rotated = -dx_30 * np.sin(yaw_radian) + dy_30 * np.cos(yaw_radian)
                 after_30_y_rotated = dx_30 * np.cos(yaw_radian) + dy_30 * np.sin(yaw_radian)                
                 after_50_x_rotated = -dx_50 * np.sin(yaw_radian) + dy_50 * np.cos(yaw_radian)
                 after_50_y_rotated = dx_50 * np.cos(yaw_radian) + dy_50 * np.sin(yaw_radian)
+
+                grid_after_10_x = int(grid_size[0] // 2 + round(after_10_x_rotated))
+                grid_after_10_y = int(grid_size[1] // 2 + round(after_10_y_rotated))                
+                grid_after_30_x = int(grid_size[0] // 2 + round(after_30_x_rotated))
+                grid_after_30_y = int(grid_size[1] // 2 + round(after_30_y_rotated))                
+                grid_after_50_x = int(grid_size[0] // 2 + round(after_50_x_rotated))
+                grid_after_50_y = int(grid_size[1] // 2 + round(after_50_y_rotated))
+
+                print(f"After 10 : ({grid_after_10_x}, {grid_after_10_y})    After 30 : ({grid_after_30_x}, {grid_after_30_y})    After 50 : ({grid_after_50_x}, {grid_after_50_y})")
                 
+                if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
+                    raise ValueError("Location after 10 timestep is outside the grid")
+                if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
+                    raise ValueError("Location after 30 timestep is outside the grid")
+                if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
+                    raise ValueError("Location after 50 timestep is outside the grid")
+
+                grid = np.zeros(grid_size)
+                
+                grid[grid_after_10_x, grid_after_10_y] = 1
+                grid[grid_after_30_x, grid_after_30_y] = 1
+                grid[grid_after_50_x, grid_after_50_y] = 1
+
+                if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
+                    pass
+                else:
+                    fig, ax = plt.subplots(figsize=(10, 10))
+                    ax.imshow(checkerboard_background, cmap=custom_color_map, origin='lower')
+                    ax.plot(grid_size[0] // 2, grid_size[1] // 2, 'ro')
+                    ax.plot(grid_after_10_x, grid_after_10_y, 'yo')
+                    ax.plot(grid_after_30_x, grid_after_30_y, 'go')
+                    ax.plot(grid_after_50_x, grid_after_50_y, 'bo')
+                    
                 
             ###
 
