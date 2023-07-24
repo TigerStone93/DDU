@@ -68,8 +68,6 @@ def training_args():
     parser.add_argument("--opt", type=str, default=optimizer, dest="optimizer", help="Choice of optimisation algorithm",)
 
     parser.add_argument("--loss", type=str, default=loss, dest="loss_function", help="Loss function to be used for training",)
-    parser.add_argument("--loss-mean", action="store_true", dest="loss_mean", help="whether to take mean of loss instead of sum to train",)
-    parser.set_defaults(loss_mean=False)
 
     parser.add_argument("--log-interval", type=int, default=log_interval, dest="log_interval", help="Log Interval on Terminal",)
     parser.add_argument("--save-interval", type=int, default=save_interval, dest="save_interval", help="Save Interval on Terminal",)
@@ -267,7 +265,7 @@ if __name__ == "__main__":
             print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             """
 
-            train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch()와 network_update()
+            train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function,) ### 여기서부터, predict_behavior3의 optimize_batch()와 network_update()
 
             ###
             map_input_tensor = torch.tensor(map_input_array) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
@@ -282,6 +280,7 @@ if __name__ == "__main__":
 
             ### train_single_epoch
             # def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
+            loss_function_dict = {"cross_entropy": F.cross_entropy}
             #log_interval = 10
             net.train()
             train_loss = 0
@@ -295,11 +294,8 @@ if __name__ == "__main__":
         
                 optimizer.zero_grad()
         
-                logits = net(data)
-                loss = F.cross_entropy(logits, labels)
-        
-                if args.loss_mean:
-                    loss = loss / len(data)
+                outputs = net(data)
+                loss = loss_function_dict[args.loss_function](outputs, labels)
         
                 loss.backward()
                 train_loss += loss.item()
