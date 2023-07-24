@@ -253,7 +253,7 @@ if __name__ == "__main__":
                 grid_label[grid_after_10_x, grid_after_10_y] = 1
                 grid_label[grid_after_30_x, grid_after_30_y] = 1
                 grid_label[grid_after_50_x, grid_after_50_y] = 1
-                grid_label_array.append(grid_label)
+                grid_label_array.append(grid_label) # (number_of_vehicles, grid_size[0], grid_size[1])
 
                 # Visualizing grid label
                 """
@@ -269,7 +269,7 @@ if __name__ == "__main__":
                     ax.plot(grid_after_30_x, grid_after_30_y, 'go')
                     ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
                     plt.show()
-            print("grid_label_array shape :", np.array(grid_label_array).shape)
+            print("grid_label_array shape :", np.array(grid_label_array).shape) # (number_of_vehicles, grid_size[0], grid_size[1])
             """
             
             # Generating map inputs by preprocessing
@@ -293,17 +293,20 @@ if __name__ == "__main__":
                 plt.imshow(map_rotated_n_cropped)
                 plt.axis('off')
                 plt.show()
-            print("map_input_array shape :", np.array(map_input_array).shape)
+            print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             """
 
             train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
 
             ###
-            map_array_tensor = torch.tensor(map_array)
-            current_record_tensor = torch.tensor(current_record)
-            #label_tensor = torch.tensor(label)
+            map_input_tensor = torch.tensor(map_input_array)
+            record_input_tensor = torch.tensor(current_record)
+            grid_label_tensor = torch.tensor(grid_label_array)
             dataset = TensorDataset(map_array_tensor, current_record_tensor)
-            
+
+            ### train_single_epoch
+            # def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
+            log_interval = 10
             log_interval = 10
             net.train()
             train_loss = 0
@@ -330,7 +333,10 @@ if __name__ == "__main__":
         
                 if batch_idx % log_interval == 0:
                     print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
-            ###
+
+            print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss / num_samples))
+            return train_loss / num_samples
+            ### train_single_epoch
             
             training_set_loss[epoch] = train_loss
             writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
