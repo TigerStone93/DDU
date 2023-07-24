@@ -268,9 +268,9 @@ if __name__ == "__main__":
             train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function,) ### 여기서부터, predict_behavior3의 optimize_batch()와 network_update()
 
             ###
-            map_input_tensor = torch.tensor(map_input_array) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
-            record_input_tensor = torch.tensor(current_record) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
-            grid_label_tensor = torch.tensor(grid_label_array) # (number_of_vehicles, grid_size[0], grid_size[1])
+            map_input_tensor = torch.tensor(map_input_array).to(device) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
+            record_input_tensor = torch.tensor(current_record).to(device) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+            grid_label_tensor = torch.tensor(grid_label_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
             """
             dataset = TensorDataset(map_input_tensor, record_input_tensor, grid_label_tensor)
             dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
@@ -283,27 +283,19 @@ if __name__ == "__main__":
             loss_function_dict = {"cross_entropy": F.cross_entropy}
             #log_interval = 10
             net.train()
-            train_loss = 0
-            num_samples = 0
+            """
             for ma, cr, l in enumerate(map_input_tensor, current_record, label):
                 pass
-            
-            for batch_idx, (data, labels) in enumerate(train_loader): # 데이터셋을 가지고
-                data = data.to(device)
-                labels = labels.to(device) # label
-        
-                optimizer.zero_grad()
-        
-                outputs = net(data)
-                loss = loss_function_dict[args.loss_function](outputs, labels)
-        
-                loss.backward()
-                train_loss += loss.item()
-                optimizer.step()
-                num_samples += len(data)
-        
-                if batch_idx % log_interval == 0:
-                    print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
+            """
+            optimizer.zero_grad()
+            outputs = net(map_input_tensor, record_input_tensor)
+            loss = loss_function_dict[args.loss_function](outputs, grid_label_tensor)
+            loss.backward()
+            optimizer.step()
+
+            ### ???
+            if batch_idx % log_interval == 0:
+                print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
 
             print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss / num_samples))
             return train_loss / num_samples
