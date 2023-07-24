@@ -296,13 +296,16 @@ if __name__ == "__main__":
             print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             """
 
-            train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch
+            train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function, loss_mean=args.loss_mean,) ### 여기서부터, predict_behavior3의 optimize_batch()와 network_update()
 
             ###
-            map_input_tensor = torch.tensor(map_input_array)
-            record_input_tensor = torch.tensor(current_record)
-            grid_label_tensor = torch.tensor(grid_label_array)
-            dataset = TensorDataset(map_array_tensor, current_record_tensor)
+            map_input_tensor = torch.tensor(map_input_array) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
+            record_input_tensor = torch.tensor(current_record) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+            grid_label_tensor = torch.tensor(grid_label_array) # (number_of_vehicles, grid_size[0], grid_size[1])
+            dataset = TensorDataset(map_input_tensor, record_input_tensor, grid_label_tensor)
+            dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+            for map_input, record_input, grid_label in dataloader:
+                pass
 
             ### train_single_epoch
             # def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
