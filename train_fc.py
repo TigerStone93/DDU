@@ -152,15 +152,14 @@ if __name__ == "__main__":
             if r > 0.1:
                 color = ( int(dx * 127 / r + 128), 128, int(dy * 127 / r + 128) )
                 cv2.line(map, ((lane[i] + compensator) * 8.).astype(np.int32), ((lane[i+1] + compensator) * 8.).astype(np.int32), color, 4)
+
+    # ============================== #
     
     # Creating summary writer in tensorboard
     writer = SummaryWriter(args.save_loc + "stats_logging/")
     training_set_loss = {}
     save_name = str(args.model) + str(args.seed)
-    print("Model save name", save_name)
-
-    # ============================== #
-    
+    print("Model save name", save_name)    
     grid_size = (91, 91) # 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
@@ -285,16 +284,15 @@ if __name__ == "__main__":
             for ma, cr, l in enumerate(map_input_tensor, current_record, label):
                 pass
             """
-            loss_function_dict = {"cross_entropy": F.cross_entropy}
             net.train()
             optimizer.zero_grad()
             outputs = net(map_input_tensor, record_input_tensor)
+            loss_function_dict = {"cross_entropy": F.cross_entropy}
             training_step_loss = loss_function_dict[args.loss_function](outputs, grid_label_tensor)
             training_step_loss.backward()
-            training_epoch_loss += training_step_loss.item()            
-            # Decaying learning_rate in every epoch according to milestone.
-            scheduler.step()
-            
+            training_epoch_loss += training_step_loss.item()
+            # Updating parameters
+            optimizer.step()
 
             ### 여기서부터
             print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
@@ -302,20 +300,23 @@ if __name__ == "__main__":
             print("====> Epoch: {} loss: {:.4f}".format(epoch, train_loss / num_samples))
             ### train_single_epoch
         
-        training_set_loss[epoch] = train_loss
-        writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
-    
-            # Saving model
-            if (epoch + 1) % args.save_interval == 0:
-                saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
-                torch.save(net.state_dict(), saved_name)
+        training_set_loss[epoch] = training_epoch_loss
+        writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
 
-    # Saving model
+        # Decaying learning_rate in every epoch according to milestone
+        scheduler.step()
+        
+        # Saving model per save_interval
+        if (epoch + 1) % args.save_interval == 0:
+            saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
+            torch.save(net.state_dict(), saved_name)
+
+    # Saving model before completion
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
     torch.save(net.state_dict(), saved_name)
     print("Model saved to ", saved_name)
     
-    with open(saved_name[: saved_name.rfind("_")] + "_train_loss.json", "a") as f:
+    with open(saved_name[: saved_name.rfind("_")] + "_training_set_loss.json", "a") as f:
         json.dump(training_set_loss, f)
     
     writer.close()
