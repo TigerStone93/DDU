@@ -267,9 +267,6 @@ if __name__ == "__main__":
             print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             """
 
-            ###
-            train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function,) ### 여기서부터, predict_behavior3의 optimize_batch()와 network_update()
-
             map_input_tensor = torch.tensor(map_input_array).to(device) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             record_input_tensor = torch.tensor(current_record).to(device) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_tensor = torch.tensor(grid_label_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
