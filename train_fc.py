@@ -170,8 +170,9 @@ if __name__ == "__main__":
         random.shuffle(record_index)
         
         # Sampling 100 indexes from 0 to 4950
+        num_samples = 100
         training_epoch_loss = 0
-        for step in record_index[:100]:
+        for step in record_index[:num_samples]:
             map_copied = map.copy()
             current_record = record[step] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
             current_xy = current_record[:, :2]
@@ -298,9 +299,10 @@ if __name__ == "__main__":
             print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))            
             ### train_single_epoch
 
+        training_epoch_loss /= num_samples
         print("====> Epoch: {} loss: {:.4f}".format(epoch, training_epoch_loss))
-        training_set_loss[epoch] = training_epoch_loss
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
+        training_set_loss[epoch] = training_epoch_loss
 
         # Decaying learning_rate according to milestones
         scheduler.step()
