@@ -169,7 +169,9 @@ if __name__ == "__main__":
         record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index)
+        
         # Sampling 100 indexes from 0 to 4950
+        training_epoch_loss = 0
         for step in record_index[:100]:
             map_copied = map.copy()
             current_record = record[step] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
@@ -265,9 +267,9 @@ if __name__ == "__main__":
             print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             """
 
+            ###
             train_loss = train_single_epoch(epoch, net, optimizer, device, loss_function=args.loss_function,) ### 여기서부터, predict_behavior3의 optimize_batch()와 network_update()
 
-            ###
             map_input_tensor = torch.tensor(map_input_array).to(device) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             record_input_tensor = torch.tensor(current_record).to(device) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_tensor = torch.tensor(grid_label_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
@@ -287,23 +289,21 @@ if __name__ == "__main__":
             net.train()
             optimizer.zero_grad()
             outputs = net(map_input_tensor, record_input_tensor)
-            loss = loss_function_dict[args.loss_function](outputs, grid_label_tensor)
-            loss.backward()
-            optimizer.step()
-
-            ### ???
-            if batch_idx % log_interval == 0:
-                print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
-
-            print("====> Epoch: {} Average loss: {:.4f}".format(epoch, train_loss / num_samples))
-            return train_loss / num_samples
-            ### train_single_epoch
-            
-            training_set_loss[epoch] = train_loss
-            writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
-
-            # Decaying learning_rate in every epoch.
+            training_step_loss = loss_function_dict[args.loss_function](outputs, grid_label_tensor)
+            training_step_loss.backward()
+            training_epoch_loss += training_step_loss.item()            
+            # Decaying learning_rate in every epoch according to milestone.
             scheduler.step()
+            
+
+            ### 여기서부터
+            print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
+
+            print("====> Epoch: {} loss: {:.4f}".format(epoch, train_loss / num_samples))
+            ### train_single_epoch
+        
+        training_set_loss[epoch] = train_loss
+        writer.add_scalar(save_name + "_train_loss", train_loss, (epoch + 1))
     
             # Saving model
             if (epoch + 1) % args.save_interval == 0:
