@@ -303,7 +303,7 @@ if __name__ == "__main__":
         training_set_loss[epoch] = training_epoch_loss
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
 
-        # Decaying learning_rate in every epoch according to milestone
+        # Decaying learning_rate according to milestones
         scheduler.step()
         
         # Saving model per save_interval
