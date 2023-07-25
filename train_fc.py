@@ -290,16 +290,15 @@ if __name__ == "__main__":
             loss_function_dict = {"cross_entropy": F.cross_entropy}
             training_step_loss = loss_function_dict[args.loss_function](outputs, grid_label_tensor)
             training_step_loss.backward()
-            training_epoch_loss += training_step_loss.item()
+            training_epoch_loss += training_step_loss.item() ### temp / 100
             # Updating parameters
             optimizer.step()
 
             ### 여기서부터
-            print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))
-
-            print("====> Epoch: {} loss: {:.4f}".format(epoch, train_loss / num_samples))
+            print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))            
             ### train_single_epoch
-        
+
+        print("====> Epoch: {} loss: {:.4f}".format(epoch, training_epoch_loss))
         training_set_loss[epoch] = training_epoch_loss
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
 
