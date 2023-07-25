@@ -23,30 +23,10 @@ import torch.nn.utils as utils
 
 # ========================================================================================== #
 
-class SpectralNormalizedFullyConnected(nn.Module):
-    def __init__(self, in_features, out_features):
-        super(SpectralNormalizedFullyConnected, self).__init__()
-        self.fully_connected = spectral_norm(nn.Linear(in_features, out_features))
-
-    def forward(self. x):
-        return self.fully_connected(x)
-        
-# ========================================================================================== #
-
-class SpectralNormalizedConvolutional(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False):
-        super(SpectralNormalizedFullyConnected, self).__init__()
-        self.convolutional = spectral_norm(nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False))
-
-    def forward(self. x):
-        return self.convolutional(x)
-        
-# ========================================================================================== #
-
-class BasicConvolutionalBlock(nn.Module):
+class SpectralNormalizedConvolutionalBlock(nn.Module):
     expansion = 1
     def __init__(self, in_channels, out_channels):
-        super(BasicConvolutionalBlock, self).__init__()
+        super(SpectralNormalizedConvolutionalBlock, self).__init__()
         self.convolutional_1 = utils.spectral_norm(nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False))
         self.batch_normalization_1 = nn.BatchNorm2d(out_channels)
         self.convolutional_2 = utils.spectral_norm(nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False))
@@ -73,6 +53,32 @@ class BasicConvolutionalBlock(nn.Module):
         out += self.shortcut(x)
         out = self.leaky_relu(out) # relu
         return out
+        
+# ========================================================================================== #
+
+class SpectralNormalizedFullyConnectedBlock(nn.Module):
+    expansion = 1
+    def __init__(self, in_features, out_features):
+        super(SpectralNormalizedFullyConnectedBlock, self).__init__()
+        self.fully_connected_1 = utils.spectral_norm(nn.Linear(in_features, out_features))
+        self.fully_connected_2 = utils.spectral_norm(nn.Linear(out_features, out_features))
+        self.shortcut = utils.spectral_norm(nn.Linear(in_features, out_features)) # skip_connection
+        self.leaky_relu = F.leaky_relu
+        
+    # ============================================================ #
+    
+    def forward(self, x):
+        out = self.leaky_relu(self.fully_connected_1(x)) # relu
+        out = self.fully_connected_2(out)
+
+        if x.shape != out.shape:
+            residual = self.shortcut(x)
+        else:
+            residual = x
+        out += residual
+        
+        out = self.leaky_relu(out) # relu
+        return out
 
 # ========================================================================================== #
 
@@ -82,7 +88,13 @@ class ResNet(nn.Module):
         num_outputs = 10,):
         super(ResNet, self).__init__()
 
-        self.convolutional_layer_1 = block
+        self.convolutional_layer_1 = SpectralNormalizedConvolutionalBlock(16, 16)
+        self.convolutional_layer_2 = SpectralNormalizedConvolutionalBlock(16, 32)
+        self.convolutional_layer_3 = SpectralNormalizedConvolutionalBlock(32, 64)
+        self.convolutional_layer_4 = SpectralNormalizedConvolutionalBlock(64, 128)
+        
+        self.fully_connected_layer_1
+            
         self.layer_1 = self._make_layer(block, 784, 784)
         self.layer_2 = self._make_layer(block, 392, 392)
         self.layer_3 = self._make_layer(block, 196, 196)
