@@ -38,12 +38,6 @@ class SpectralNormalizedConvolutionalBlock(nn.Module):
                                           nn.BatchNorm2d(out_channels))
 
         self.leaky_relu = F.leaky_relu
-        """
-        self.fully_connected_1 = SpectralNormalizedFullyConnected(in_features, out_features)
-        self.fully_connected_2 = SpectralNormalizedFullyConnected(out_features, out_features)
-        self.downsampled = SpectralNormalizedFullyConnected(in_features, out_features) # Skip Connection
-        self.leaky_relu = F.leaky_relu # Activation
-        """
 
     # ============================================================ #
     
@@ -62,7 +56,9 @@ class SpectralNormalizedFullyConnectedBlock(nn.Module):
         super(SpectralNormalizedFullyConnectedBlock, self).__init__()
         self.fully_connected_1 = utils.spectral_norm(nn.Linear(in_features, out_features))
         self.fully_connected_2 = utils.spectral_norm(nn.Linear(out_features, out_features))
+        
         self.shortcut = utils.spectral_norm(nn.Linear(in_features, out_features)) # skip_connection
+        
         self.leaky_relu = F.leaky_relu
         
     # ============================================================ #
@@ -71,10 +67,9 @@ class SpectralNormalizedFullyConnectedBlock(nn.Module):
         out = self.leaky_relu(self.fully_connected_1(x)) # relu
         out = self.fully_connected_2(out)
 
+        residual = x
         if x.shape != out.shape:
             residual = self.shortcut(x)
-        else:
-            residual = x
         out += residual
         
         out = self.leaky_relu(out) # relu
@@ -88,36 +83,29 @@ class ResNet(nn.Module):
         num_outputs = 10,):
         super(ResNet, self).__init__()
 
-        self.convolutional_layer_1 = SpectralNormalizedConvolutionalBlock(16, 16)
-        self.convolutional_layer_2 = SpectralNormalizedConvolutionalBlock(16, 32)
-        self.convolutional_layer_3 = SpectralNormalizedConvolutionalBlock(32, 64)
-        self.convolutional_layer_4 = SpectralNormalizedConvolutionalBlock(64, 128)
+        self.convolutional_block_1 = SpectralNormalizedConvolutionalBlock(16, 16)
+        self.convolutional_block_2 = SpectralNormalizedConvolutionalBlock(16, 32)
+        self.convolutional_block_3 = SpectralNormalizedConvolutionalBlock(32, 64)
+        self.convolutional_block_4 = SpectralNormalizedConvolutionalBlock(64, 128)
         
-        self.fully_connected_layer_1
-            
-        self.layer_1 = self._make_layer(block, 784, 784)
-        self.layer_2 = self._make_layer(block, 392, 392)
-        self.layer_3 = self._make_layer(block, 196, 196)
-        self.layer_4 = self._make_layer(block, 98, 98)
-        self.fully_connected_layer = nn.Linear(98 * block.expansion, num_outputs)
-
-    # ============================================================ #
-
-    # Fully Connected Layer
-    def _make_layer(self, block, in_features, out_features):
-        layers = []
-        layers.append(block(in_features, out_features))
-        layers.append(block(out_features, out_features))
-        return nn.Sequential(*layers)
+        self.fully_connected_block_1 = SpectralNormalizedFullyConnectedBlock(784, 784)
+        self.fully_connected_block_2 = SpectralNormalizedFullyConnectedBlock(392, 392)
+        self.fully_connected_block_3 = SpectralNormalizedFullyConnectedBlock(196, 196)
+        self.fully_connected_block_4 = SpectralNormalizedFullyConnectedBlock(98, 98)
+        self.output_layer = nn.Linear(98, num_outputs)
+        
+        self.leaky_relu = F.leaky_relu
         
     # ============================================================ #
     
     def forward(self, x):
-        out = self.layer_1(x)
-        out = self.layer_2(out)
-        out = self.layer_3(out)
-        out = self.layer_4(out)
-        out = self.fully_connected_layer(out)
+        out = self.convolutional_block_1(x)
+        out = self.convolutional_block_2(out)
+        out = self.convolutional_block_3(out)
+        out = self.convolutional_block_4(out)
+        out = out.view(out.size(0), -1) # Flattening
+        
+        out = self.leaky_relu(self.fully_connected_block_1(out))
         return out
 
 # ========================================================================================== #
