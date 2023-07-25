@@ -274,30 +274,15 @@ if __name__ == "__main__":
             record_input_tensor = torch.tensor(current_record).to(device) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_tensor = torch.tensor(grid_label_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
             
-            ### train_single_epoch
-            # def train_single_epoch(epoch, model, train_loader, optimizer, device, loss_function="cross_entropy", loss_mean=False,):
-            """
-            dataset = TensorDataset(map_input_tensor, record_input_tensor, grid_label_tensor)
-            dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-            for map_input, record_input, grid_label in dataloader:
-                pass
-                
-            for ma, cr, l in enumerate(map_input_tensor, current_record, label):
-                pass
-            """
             net.train()
             optimizer.zero_grad()
-            outputs = net(map_input_tensor, record_input_tensor)
+            output = net(map_input_tensor, record_input_tensor)
             loss_function_dict = {"cross_entropy": F.cross_entropy}
-            training_step_loss = loss_function_dict[args.loss_function](outputs, grid_label_tensor)
+            training_step_loss = loss_function_dict[args.loss_function](output, grid_label_tensor)
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item() ### temp / 100
             # Updating parameters
             optimizer.step()
-
-            ### 여기서부터
-            print("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader) * len(data), 100.0 * batch_idx / len(train_loader), loss.item(),))            
-            ### train_single_epoch
 
         training_epoch_loss /= num_samples
         print("====> Epoch: {} loss: {:.4f}".format(epoch, training_epoch_loss))
