@@ -115,6 +115,7 @@ if __name__ == "__main__":
         (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
         ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
+        # Temperature scaling the trained network (Calibrating the classifier to adjust the confidence of prediction)
         temp_scaled_net = ModelWithTemperature(net)
         temp_scaled_net.set_temperature(val_loader)
         topt = temp_scaled_net.temperature
