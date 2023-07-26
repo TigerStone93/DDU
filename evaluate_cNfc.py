@@ -98,15 +98,14 @@ if __name__ == "__main__":
         
         # Loading the model(s)
         train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
-        saved_model_name = os.path.join(
-            args.load_loc,
-            "Run" + str(i + 1),
-            model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",)
+        saved_model_name = os.path.join(args.load_loc, "Run" + str(i + 1), model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",)
         net = models[args.model](spectral_normalization=args.sn, mod=args.mod, coeff=args.coeff, num_classes=num_classes, temp=1.0,)
+        
         if args.gpu:
             net.cuda()
             net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
             cudnn.benchmark = True
+            
         net.load_state_dict(torch.load(str(saved_model_name)))
         net.eval()
 
