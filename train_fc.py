@@ -93,6 +93,8 @@ models = {
     "resnet18": resnet18,
     "resnet50": resnet50,}
 
+grid_size = (91, 91) # 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
+
 # ========================================================================================== #
 
 if __name__ == "__main__":
@@ -159,8 +161,7 @@ if __name__ == "__main__":
     writer = SummaryWriter(args.save_loc + "stats_logging/")
     training_set_loss = {}
     save_name = str(args.model) + str(args.seed)
-    print("Model save name", save_name)    
-    grid_size = (91, 91) # 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
+    print("Model save name", save_name)
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
         
