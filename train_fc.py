@@ -98,33 +98,33 @@ grid_size = (91, 91) # 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m /
 # ========================================================================================== #
 
 if __name__ == "__main__":
-    # Parsing arguments
+    # Parsing the arguments
     args = training_args().parse_args()
 
-    # Setting seed
+    # Setting the seed
     print("Parsed args", args)
     print("Seed: ", args.seed)
     torch.manual_seed(args.seed)
 
-    # Setting device
+    # Setting the device
     cuda = torch.cuda.is_available() and args.gpu
     device = torch.device("cuda" if cuda else "cpu")
     print("CUDA set: " + str(cuda))
 
-    # Setting num_outputs from dataset
+    # Setting the num_outputs from dataset
     num_outputs = dataset_num_outputs[args.dataset]
 
-    # Choosing model to train
+    # Choosing the model to train
     net = models[args.model](
         num_outputs = num_outputs,)
 
-    # Using gpu
+    # Using the gpu
     if args.gpu:
         net.cuda()
         net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
         cudnn.benchmark = True
 
-    # Choosing optimizer
+    # Choosing the optimizer
     opt_params = net.parameters()
     if args.optimizer == "sgd":
         optimizer = optim.SGD(opt_params, lr=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=args.nesterov,)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         optimizer = optim.Adam(opt_params, lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1)
 
-    # Drawing map image for training
+    # Drawing the map image for training
     lanes = []
     with open("lane_town03.txt", "rt") as rf:
         for line in rf.readlines():
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     # ============================== #
     
-    # Creating summary writer in tensorboard
+    # Creating the summary writer in tensorboard
     writer = SummaryWriter(args.save_loc + "stats_logging/")
     training_set_loss = {}
     save_name = str(args.model) + str(args.seed)
@@ -165,12 +165,12 @@ if __name__ == "__main__":
     for epoch in range(0, args.epoch):
         print("Starting epoch", epoch)
         
-        # Loading matrix dataset for preprocessing
+        # Loading the matrix dataset for preprocessing
         record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index)
         
-        # Sampling 100 indexes from 0 to 4950
+        # Sampling the 100 indexes from 0 to 4950
         num_samples = 100
         training_epoch_loss = 0
         for step in record_index[:num_samples]:
@@ -183,14 +183,14 @@ if __name__ == "__main__":
             after_50_xy = record[step+50, :, :2]
             combined_record = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
 
-            # Generating grid labels by preprocessing
+            # Generating the grid labels by preprocessing
             grid_label_after_10_array = []
             grid_label_after_30_array = []
             grid_label_after_50_array = []
             for cr in combined_record:                
                 current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
-                # Rotating heading of vehicle to align with center-top cell of grid
+                # Rotating the heading of vehicle to align with center-top cell of grid
                 dx_10 = after_10_x - x
                 dy_10 = after_10_y - y
                 dx_30 = after_30_x - x
@@ -222,7 +222,7 @@ if __name__ == "__main__":
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
                     raise ValueError(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid")
                 
-                # Saving grid label by stacking as array
+                # Saving the grid label by stacking as array
                 grid_label_after_10 = np.zeros(grid_size)
                 grid_label_after_30 = np.zeros(grid_size)
                 grid_label_after_50 = np.zeros(grid_size)
@@ -233,7 +233,7 @@ if __name__ == "__main__":
                 grid_label_after_30_array.append(grid_label_after_30) # (number_of_vehicles, grid_size[0], grid_size[1])                
                 grid_label_after_50_array.append(grid_label_after_50) # (number_of_vehicles, grid_size[0], grid_size[1])
                 
-                # Visualizing grid label
+                # Visualizing the grid label
                 """
                 if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
                     pass
@@ -250,7 +250,7 @@ if __name__ == "__main__":
             print("grid_label_after_10_array shape :", np.array(grid_label_after_10_array).shape) # (number_of_vehicles, grid_size[0], grid_size[1])
             """
             
-            # Generating map inputs by preprocessing
+            # Generating the map inputs by preprocessing
             for cr in current_record:
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
             map_input_array = []
@@ -265,7 +265,7 @@ if __name__ == "__main__":
                 map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
                 map_input_array.append(map_rotated_n_cropped.astype(np.float32) / 128.0 - 1.0) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
                 
-                # Visualizing map
+                # Visualizing the map
                 """
                 map_rotated_n_cropped = cv2.cvtColor(map_rotated_n_cropped, cv2.COLOR_BGR2RGB)
                 plt.imshow(map_rotated_n_cropped)
@@ -284,15 +284,15 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             output = net(map_input_tensor, record_input_tensor)
 
-            # Flattening output and label
+            # Flattening the output and label
             output_flattened = output.view(output.size(0), -1)
             label_flattened = grid_label_tensor.view(grid_label_tensor.size(0), -1)
             
-            # Calculating cross entropy loss by applying softmax output 
+            # Calculating the cross entropy loss by applying softmax output 
             loss_function_dict = {"cross_entropy": F.cross_entropy}
             cross_entropy_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened) # 0 ~ inf
 
-            # Calculating euclidean distance loss
+            # Calculating the euclidean distance loss
             _, output_indices = torch.max(output_flattened, dim=1)
             _, label_indices = torch.max(label_flattened, dim=1)
 
@@ -305,7 +305,7 @@ if __name__ == "__main__":
             
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
-            # Updating parameters
+            # Updating the parameters
             optimizer.step()
 
         training_epoch_loss /= num_samples # / 100
@@ -313,15 +313,15 @@ if __name__ == "__main__":
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
         training_set_loss[epoch] = training_epoch_loss
 
-        # Decaying learning_rate according to milestones
+        # Decaying the learning_rate according to milestones
         scheduler.step()
         
-        # Saving model per save_interval
+        # Saving the model per save_interval
         if (epoch + 1) % args.save_interval == 0:
             saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
             torch.save(net.state_dict(), saved_name)
 
-    # Saving model before completion
+    # Saving the model before completion
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
     torch.save(net.state_dict(), saved_name)
     print("Model saved to ", saved_name)
