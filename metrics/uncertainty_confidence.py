@@ -7,6 +7,12 @@ import torch.nn.functional as F
 
 # ========================================================================================== #
 
+# For softmax
+def confidence(logits):
+    p = F.softmax(logits, dim=1)
+    confidence, _ = torch.max(p, dim=1)
+    return confidence
+    
 # For GMM and softmax
 def entropy(logits):
     p = F.softmax(logits, dim=1)
@@ -18,14 +24,6 @@ def entropy(logits):
 # For GMM and softmax
 def logsumexp(logits):
     return torch.logsumexp(logits, dim=1, keepdim=False)
-
-# ========================================================================================== #
-
-# For softmax
-def confidence(logits):
-    p = F.softmax(logits, dim=1)
-    confidence, _ = torch.max(p, dim=1)
-    return confidence
 
 # ========================================================================================== #
 
