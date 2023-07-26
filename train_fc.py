@@ -13,13 +13,7 @@ from torch import optim
 import torch.backends.cudnn as cudnn
 from torch.nn import functional as F
 
-# Import dataloaders
-import data.ood_detection.cifar10 as cifar10
-import data.ood_detection.cifar100 as cifar100
-import data.ood_detection.svhn as svhn
-import data.dirty_mnist as dirty_mnist
-
-# Import network models
+# Importing the network models
 from net.resnet import resnet18, resnet50
 
 # Tensorboard utilities
@@ -288,7 +282,7 @@ if __name__ == "__main__":
             output_flattened = output.view(output.size(0), -1)
             label_flattened = grid_label_tensor.view(grid_label_tensor.size(0), -1)
             
-            # Calculating the cross entropy loss by applying softmax output 
+            # Calculating the cross entropy loss by applying the softmax output 
             loss_function_dict = {"cross_entropy": F.cross_entropy}
             cross_entropy_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened) # 0 ~ inf
 
