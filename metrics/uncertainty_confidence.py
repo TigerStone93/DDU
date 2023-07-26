@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 # ========================================================================================== #
 
+# For GMM and softmax
 def entropy(logits):
     p = F.softmax(logits, dim=1)
     logp = F.log_softmax(logits, dim=1)
@@ -14,6 +15,7 @@ def entropy(logits):
     entropy = -torch.sum(plogp, dim=1)
     return entropy
 
+# For GMM and softmax
 def logsumexp(logits):
     return torch.logsumexp(logits, dim=1, keepdim=False)
 
