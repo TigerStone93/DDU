@@ -2,15 +2,19 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
+# ========================================================================================== #
+
 DOUBLE_INFO = torch.finfo(torch.double)
 JITTERS = [0, DOUBLE_INFO.tiny] + [10 ** exp for exp in range(-308, 0, 1)]
 
+# ========================================================================================== #
 
 def centered_cov_torch(x):
     n = x.shape[0]
     res = 1 / (n - 1) * x.t().mm(x)
     return res
 
+# ========================================================================================== #
 
 def get_embeddings(
     net, loader: torch.utils.data.DataLoader, num_dim: int, dtype, device, storage_device,
