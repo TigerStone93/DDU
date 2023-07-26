@@ -45,6 +45,7 @@ def get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=False
 
 # ========================================================================================== #
 
+# For ensemble
 def get_roc_auc_ensemble(model_ensemble, test_loader, ood_test_loader, uncertainty, device):
     bin_labels_uncertainties = None
     uncertainties = None
