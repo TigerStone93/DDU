@@ -96,106 +96,67 @@ if __name__ == "__main__":
     for i in range(args.runs):
         print(f"Evaluating run: {(i+1)}")
         # Loading the model(s)
-        if args.model_type == "ensemble": # ensemble
-            val_loaders = []
-            for j in range(args.ensemble):
-                train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+(5*i)+j), val_size=0.1, pin_memory=args.gpu,)
-                val_loaders.append(val_loader)
-            # Evaluate an ensemble
-            ensemble_loc = os.path.join(args.load_loc, ("Run" + str(i + 1)))
-            net_ensemble = load_ensemble(
-                ensemble_loc=ensemble_loc,
-                model_name=args.model,
-                device=device,
-                num_classes=num_classes,
-                spectral_normalization=args.sn,
-                mod=args.mod,
-                coeff=args.coeff,
-                seed=(5*i+1))
-            
-        else: # 
-            train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
-            saved_model_name = os.path.join(
-                args.load_loc,
-                "Run" + str(i + 1),
-                model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",)
-            net = models[args.model](spectral_normalization=args.sn, mod=args.mod, coeff=args.coeff, num_classes=num_classes, temp=1.0,)
-            if args.gpu:
-                net.cuda()
-                net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
-                cudnn.benchmark = True
-            net.load_state_dict(torch.load(str(saved_model_name)))
-            net.eval()
+        train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
+        saved_model_name = os.path.join(
+            args.load_loc,
+            "Run" + str(i + 1),
+            model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",)
+        net = models[args.model](spectral_normalization=args.sn, mod=args.mod, coeff=args.coeff, num_classes=num_classes, temp=1.0,)
+        if args.gpu:
+            net.cuda()
+            net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
+            cudnn.benchmark = True
+        net.load_state_dict(torch.load(str(saved_model_name)))
+        net.eval()
 
         # Evaluating the model(s)
-        if args.model_type == "ensemble":
-            (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net_ensemble(net_ensemble, test_loader, device)
-            ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
+        (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
+        ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
-            (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc_ensemble(net_ensemble, test_loader, ood_test_loader, "mutual_information", device)
-            (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc_ensemble(net_ensemble, test_loader, ood_test_loader, "entropy", device)
+        temp_scaled_net = ModelWithTemperature(net)
+        temp_scaled_net.set_temperature(val_loader)
+        topt = temp_scaled_net.temperature
 
-            # Temperature scale the ensemble
-            t_ensemble = []
-            for model, val_loader in zip(net_ensemble, val_loaders):
-                t_model = ModelWithTemperature(model)
-                t_model.set_temperature(val_loader)
-                t_ensemble.append(t_model)
+        (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
+        t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
 
-            (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net_ensemble(t_ensemble, test_loader, device)
-            t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
+        if (args.model_type == "gmm"): # gmm
+            # Evaluate a GMM model
+            print("GMM Model")
+            embeddings, labels = get_embeddings(
+                net,
+                train_loader,
+                num_dim=model_to_num_dim[args.model],
+                dtype=torch.double,
+                device=device,
+                storage_device=device,)
 
-            (_, _, _), (_, _, _), t_m1_auroc, t_m1_auprc = get_roc_auc_ensemble(t_ensemble, test_loader, ood_test_loader, "mutual_information", device)
-            (_, _, _), (_, _, _), t_m2_auroc, t_m2_auprc = get_roc_auc_ensemble(t_ensemble, test_loader, ood_test_loader, "entropy", device)
+            try:
+                gaussians_model, jitter_eps = gmm_fit(embeddings=embeddings, labels=labels, num_classes=num_classes)
+                logits, labels = gmm_evaluate(net, gaussians_model, test_loader, device=device, num_classes=num_classes, storage_device=device,)
 
-        else: #
-            (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
-            ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
+                ood_logits, ood_labels = gmm_evaluate(net, gaussians_model, ood_test_loader, device=device, num_classes=num_classes, storage_device=device,)
 
-            temp_scaled_net = ModelWithTemperature(net)
-            temp_scaled_net.set_temperature(val_loader)
-            topt = temp_scaled_net.temperature
+                (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc_logits(logits, ood_logits, logsumexp, device, confidence=True)
+                (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc_logits(logits, ood_logits, entropy, device)
 
-            (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
-            t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
+                t_m1_auroc = m1_auroc
+                t_m1_auprc = m1_auprc
+                t_m2_auroc = m2_auroc
+                t_m2_auprc = m2_auprc
 
-            if (args.model_type == "gmm"): # gmm
-                # Evaluate a GMM model
-                print("GMM Model")
-                embeddings, labels = get_embeddings(
-                    net,
-                    train_loader,
-                    num_dim=model_to_num_dim[args.model],
-                    dtype=torch.double,
-                    device=device,
-                    storage_device=device,)
+            except RuntimeError as e:
+                print("Runtime Error caught: " + str(e))
+                continue
 
-                try:
-                    gaussians_model, jitter_eps = gmm_fit(embeddings=embeddings, labels=labels, num_classes=num_classes)
-                    logits, labels = gmm_evaluate(net, gaussians_model, test_loader, device=device, num_classes=num_classes, storage_device=device,)
+        else: # softmax
+            # Evaluate a normal Softmax model
+            print("Softmax Model")
+            (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc(net, test_loader, ood_test_loader, logsumexp, device, confidence=True)
+            (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc(net, test_loader, ood_test_loader, entropy, device)
 
-                    ood_logits, ood_labels = gmm_evaluate(net, gaussians_model, ood_test_loader, device=device, num_classes=num_classes, storage_device=device,)
-
-                    (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc_logits(logits, ood_logits, logsumexp, device, confidence=True)
-                    (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc_logits(logits, ood_logits, entropy, device)
-
-                    t_m1_auroc = m1_auroc
-                    t_m1_auprc = m1_auprc
-                    t_m2_auroc = m2_auroc
-                    t_m2_auprc = m2_auprc
-
-                except RuntimeError as e:
-                    print("Runtime Error caught: " + str(e))
-                    continue
-
-            else: # softmax
-                # Evaluate a normal Softmax model
-                print("Softmax Model")
-                (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc(net, test_loader, ood_test_loader, logsumexp, device, confidence=True)
-                (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc(net, test_loader, ood_test_loader, entropy, device)
-
-                (_, _, _), (_, _, _), t_m1_auroc, t_m1_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, logsumexp, device, confidence=True,)
-                (_, _, _), (_, _, _), t_m2_auroc, t_m2_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, entropy, device)
+            (_, _, _), (_, _, _), t_m1_auroc, t_m1_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, logsumexp, device, confidence=True,)
+            (_, _, _), (_, _, _), t_m2_auroc, t_m2_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, entropy, device)
 
         accuracies.append(accuracy)
 
