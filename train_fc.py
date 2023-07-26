@@ -275,6 +275,7 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             output = net(map_input_tensor, record_input_tensor)
             loss_function_dict = {"cross_entropy": F.cross_entropy}
+            # Applying softmax output
             training_step_loss = loss_function_dict[args.loss_function](output, grid_label_tensor)
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item() ### temp / 100
