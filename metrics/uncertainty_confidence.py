@@ -19,6 +19,7 @@ def logsumexp(logits):
 
 # ============================================================ #
 
+# For softmax
 def confidence(logits):
     p = F.softmax(logits, dim=1)
     confidence, _ = torch.max(p, dim=1)
