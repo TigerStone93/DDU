@@ -274,9 +274,28 @@ if __name__ == "__main__":
             net.train()
             optimizer.zero_grad()
             output = net(map_input_tensor, record_input_tensor)
+
+            # Flattening output and label
+            output_flattened = output.view(output.size(0), -1)
+            label_flattened = grid_label_tensor.view(grid_label_tensor.size(0), -1)
+            
             # Applying softmax output
             loss_function_dict = {"cross_entropy": F.cross_entropy}
-            training_step_loss = loss_function_dict[args.loss_function](output.view(output.size(0), -1), grid_label_tensor.view(output.size(0), -1))
+            """
+            training_step_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened)
+            """
+            cross_entropy_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened)
+            
+            _, output_indices = torch.max(output_flattened, dim=1)
+            _, label_indices = torch.max(label_flattened, dim=1)
+
+            output_cell = torch.stack((output_indices // 91, output_indices % 91), dim=1)
+            label_cell = torch.stack((label_indices // 91, label_indices % 91), dim=1)
+
+            euclidean_loss = torch.norm(output_cell.float() - label_cell.float(), dim=1).mean()
+
+            training_step_loss = cross_entropy_loss + euclidean_loss
+            
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
             # Updating parameters
