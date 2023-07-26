@@ -27,6 +27,7 @@ def confidence(logits):
     confidence, _ = torch.max(p, dim=1)
     return confidence
 
+# For ensemble
 def entropy_prob(probs):
     p = probs
     eps = 1e-12
@@ -35,6 +36,7 @@ def entropy_prob(probs):
     entropy = -torch.sum(plogp, dim=1)
     return entropy
 
+# For ensemble
 def mutual_information_prob(probs):
     mean_output = torch.mean(probs, dim=0)
     predictive_entropy = entropy_prob(mean_output)
