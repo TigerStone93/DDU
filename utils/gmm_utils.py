@@ -9,13 +9,6 @@ JITTERS = [0, DOUBLE_INFO.tiny] + [10 ** exp for exp in range(-308, 0, 1)]
 
 # ========================================================================================== #
 
-def centered_cov_torch(x):
-    n = x.shape[0]
-    res = 1 / (n - 1) * x.t().mm(x)
-    return res
-
-# ========================================================================================== #
-
 def get_embeddings(
     net, loader: torch.utils.data.DataLoader, num_dim: int, dtype, device, storage_device,
 ):
@@ -43,6 +36,41 @@ def get_embeddings(
 
     return embeddings, labels
 
+# ========================================================================================== #
+
+def centered_cov_torch(x):
+    n = x.shape[0]
+    res = 1 / (n - 1) * x.t().mm(x)
+    return res
+
+
+def gmm_fit(embeddings, labels, num_classes):
+    with torch.no_grad():
+        classwise_mean_features = torch.stack([torch.mean(embeddings[labels == c], dim=0) for c in range(num_classes)])
+        classwise_cov_features = torch.stack(
+            [centered_cov_torch(embeddings[labels == c] - classwise_mean_features[c]) for c in range(num_classes)]
+        )
+
+    with torch.no_grad():
+        for jitter_eps in JITTERS:
+            try:
+                jitter = jitter_eps * torch.eye(
+                    classwise_cov_features.shape[1], device=classwise_cov_features.device,
+                ).unsqueeze(0)
+                gmm = torch.distributions.MultivariateNormal(
+                    loc=classwise_mean_features, covariance_matrix=(classwise_cov_features + jitter),
+                )
+            except RuntimeError as e:
+                if "cholesky" in str(e):
+                    continue
+            except ValueError as e:
+                if "The parameter covariance_matrix has invalid values" in str(e):
+                    continue
+            break
+
+    return gmm, jitter_eps
+
+# ========================================================================================== #
 
 def gmm_forward(net, gaussians_model, data_B_X):
 
@@ -79,35 +107,9 @@ def gmm_evaluate(net, gaussians_model, loader, device, num_classes, storage_devi
 
     return logits_N_C, labels_N
 
+# ========================================================================================== #
 
 def gmm_get_logits(gmm, embeddings):
 
     log_probs_B_Y = gmm.log_prob(embeddings[:, None, :])
     return log_probs_B_Y
-
-
-def gmm_fit(embeddings, labels, num_classes):
-    with torch.no_grad():
-        classwise_mean_features = torch.stack([torch.mean(embeddings[labels == c], dim=0) for c in range(num_classes)])
-        classwise_cov_features = torch.stack(
-            [centered_cov_torch(embeddings[labels == c] - classwise_mean_features[c]) for c in range(num_classes)]
-        )
-
-    with torch.no_grad():
-        for jitter_eps in JITTERS:
-            try:
-                jitter = jitter_eps * torch.eye(
-                    classwise_cov_features.shape[1], device=classwise_cov_features.device,
-                ).unsqueeze(0)
-                gmm = torch.distributions.MultivariateNormal(
-                    loc=classwise_mean_features, covariance_matrix=(classwise_cov_features + jitter),
-                )
-            except RuntimeError as e:
-                if "cholesky" in str(e):
-                    continue
-            except ValueError as e:
-                if "The parameter covariance_matrix has invalid values" in str(e):
-                    continue
-            break
-
-    return gmm, jitter_eps
