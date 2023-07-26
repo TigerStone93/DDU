@@ -287,22 +287,20 @@ if __name__ == "__main__":
             output_flattened = output.view(output.size(0), -1)
             label_flattened = grid_label_tensor.view(grid_label_tensor.size(0), -1)
             
-            # Applying softmax output
+            # Calculating cross entropy loss by applying softmax output 
             loss_function_dict = {"cross_entropy": F.cross_entropy}
-            """
-            training_step_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened)
-            """
-            cross_entropy_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened)
-            
+            cross_entropy_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened) # 0 ~ inf
+
+            # Calculating euclidean distance loss
             _, output_indices = torch.max(output_flattened, dim=1)
             _, label_indices = torch.max(label_flattened, dim=1)
 
             output_cell = torch.stack((output_indices // 91, output_indices % 91), dim=1)
             label_cell = torch.stack((label_indices // 91, label_indices % 91), dim=1)
 
-            euclidean_loss = torch.norm(output_cell.float() - label_cell.float(), dim=1).mean()
+            euclidean_distance_loss = torch.norm(output_cell.float() - label_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
 
-            training_step_loss = cross_entropy_loss + 0.1 * euclidean_loss
+            training_step_loss = cross_entropy_loss + 0.1 * euclidean_distance_loss
             
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
