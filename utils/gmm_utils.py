@@ -9,9 +9,7 @@ JITTERS = [0, DOUBLE_INFO.tiny] + [10 ** exp for exp in range(-308, 0, 1)]
 
 # ========================================================================================== #
 
-def get_embeddings(
-    net, loader: torch.utils.data.DataLoader, num_dim: int, dtype, device, storage_device,
-):
+def get_embeddings(net, loader: torch.utils.data.DataLoader, num_dim: int, dtype, device, storage_device,):
     num_samples = len(loader.dataset)
     embeddings = torch.empty((num_samples, num_dim), dtype=dtype, device=storage_device)
     labels = torch.empty(num_samples, dtype=torch.int, device=storage_device)
@@ -47,19 +45,13 @@ def centered_cov_torch(x):
 def gmm_fit(embeddings, labels, num_classes):
     with torch.no_grad():
         classwise_mean_features = torch.stack([torch.mean(embeddings[labels == c], dim=0) for c in range(num_classes)])
-        classwise_cov_features = torch.stack(
-            [centered_cov_torch(embeddings[labels == c] - classwise_mean_features[c]) for c in range(num_classes)]
-        )
+        classwise_cov_features = torch.stack([centered_cov_torch(embeddings[labels == c] - classwise_mean_features[c]) for c in range(num_classes)])
 
     with torch.no_grad():
         for jitter_eps in JITTERS:
             try:
-                jitter = jitter_eps * torch.eye(
-                    classwise_cov_features.shape[1], device=classwise_cov_features.device,
-                ).unsqueeze(0)
-                gmm = torch.distributions.MultivariateNormal(
-                    loc=classwise_mean_features, covariance_matrix=(classwise_cov_features + jitter),
-                )
+                jitter = jitter_eps * torch.eye(classwise_cov_features.shape[1], device=classwise_cov_features.device,).unsqueeze(0)
+                gmm = torch.distributions.MultivariateNormal(loc=classwise_mean_features, covariance_matrix=(classwise_cov_features + jitter),)
             except RuntimeError as e:
                 if "cholesky" in str(e):
                     continue
@@ -73,7 +65,6 @@ def gmm_fit(embeddings, labels, num_classes):
 # ========================================================================================== #
 
 def gmm_forward(net, gaussians_model, data_B_X):
-
     if isinstance(net, nn.DataParallel):
         features_B_Z = net.module(data_B_X)
         features_B_Z = net.module.feature
@@ -87,7 +78,6 @@ def gmm_forward(net, gaussians_model, data_B_X):
 
 
 def gmm_evaluate(net, gaussians_model, loader, device, num_classes, storage_device):
-
     num_samples = len(loader.dataset)
     logits_N_C = torch.empty((num_samples, num_classes), dtype=torch.float, device=storage_device)
     labels_N = torch.empty(num_samples, dtype=torch.int, device=storage_device)
@@ -110,6 +100,5 @@ def gmm_evaluate(net, gaussians_model, loader, device, num_classes, storage_devi
 # ========================================================================================== #
 
 def gmm_get_logits(gmm, embeddings):
-
     log_probs_B_Y = gmm.log_prob(embeddings[:, None, :])
     return log_probs_B_Y
