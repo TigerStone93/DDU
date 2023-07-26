@@ -11,6 +11,7 @@ from metrics.uncertainty_confidence import entropy, logsumexp, confidence
 
 # ========================================================================================== #
 
+# For softmax
 def get_roc_auc(net, test_loader, ood_test_loader, uncertainty, device, confidence=False):
     logits, _ = get_logits_labels(net, test_loader, device)
     ood_logits, _ = get_logits_labels(net, ood_test_loader, device)
@@ -18,6 +19,7 @@ def get_roc_auc(net, test_loader, ood_test_loader, uncertainty, device, confiden
     return get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=confidence)
 
 
+# For GMM and softmax
 def get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=False):
     uncertainties = uncertainty(logits)
     ood_uncertainties = uncertainty(ood_logits)
