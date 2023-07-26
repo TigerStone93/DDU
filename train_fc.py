@@ -276,13 +276,13 @@ if __name__ == "__main__":
             output = net(map_input_tensor, record_input_tensor)
             # Applying softmax output
             loss_function_dict = {"cross_entropy": F.cross_entropy}
-            training_step_loss = loss_function_dict[args.loss_function](output, grid_label_tensor)
+            training_step_loss = loss_function_dict[args.loss_function](output.view(output.size(0), -1), grid_label_tensor.view(output.size(0), -1))
             training_step_loss.backward()
-            training_epoch_loss += training_step_loss.item() ### temp / 100
+            training_epoch_loss += training_step_loss.item()
             # Updating parameters
             optimizer.step()
 
-        training_epoch_loss /= num_samples
+        training_epoch_loss /= num_samples # / 100
         print("====> Epoch: {} loss: {:.4f}".format(epoch, training_epoch_loss))
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
         training_set_loss[epoch] = training_epoch_loss
