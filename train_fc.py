@@ -183,7 +183,9 @@ if __name__ == "__main__":
             combined_record = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
 
             # Generating grid labels by preprocessing
-            grid_label_array = []
+            grid_label_after_10_array = []
+            grid_label_after_30_array = []
+            grid_label_after_50_array = []
             for cr in combined_record:                
                 current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
@@ -218,14 +220,18 @@ if __name__ == "__main__":
                     raise ValueError(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid")
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
                     raise ValueError(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid")
-
+                
                 # Saving grid label by stacking as array
-                grid_label = np.zeros(grid_size)
-                grid_label[grid_after_10_x, grid_after_10_y] = 1
-                grid_label[grid_after_30_x, grid_after_30_y] = 1
-                grid_label[grid_after_50_x, grid_after_50_y] = 1
-                grid_label_array.append(grid_label) # (number_of_vehicles, grid_size[0], grid_size[1])
-
+                grid_label_after_10 = np.zeros(grid_size)
+                grid_label_after_30 = np.zeros(grid_size)
+                grid_label_after_50 = np.zeros(grid_size)
+                grid_label_after_10[grid_after_10_x, grid_after_10_y] = 1
+                grid_label_after_30[grid_after_30_x, grid_after_30_y] = 1
+                grid_label_after_50[grid_after_50_x, grid_after_50_y] = 1
+                grid_label_after_10_array.append(grid_label_after_10) # (number_of_vehicles, grid_size[0], grid_size[1])                
+                grid_label_after_30_array.append(grid_label_after_30) # (number_of_vehicles, grid_size[0], grid_size[1])                
+                grid_label_after_50_array.append(grid_label_after_50) # (number_of_vehicles, grid_size[0], grid_size[1])
+                
                 # Visualizing grid label
                 """
                 if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
@@ -240,7 +246,7 @@ if __name__ == "__main__":
                     ax.plot(grid_after_30_x, grid_after_30_y, 'go')
                     ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
                     plt.show()
-            print("grid_label_array shape :", np.array(grid_label_array).shape) # (number_of_vehicles, grid_size[0], grid_size[1])
+            print("grid_label_after_10_array shape :", np.array(grid_label_after_10_array).shape) # (number_of_vehicles, grid_size[0], grid_size[1])
             """
             
             # Generating map inputs by preprocessing
@@ -269,7 +275,9 @@ if __name__ == "__main__":
 
             map_input_tensor = torch.tensor(map_input_array).to(device) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             record_input_tensor = torch.tensor(current_record).to(device) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
-            grid_label_tensor = torch.tensor(grid_label_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
+            grid_label_after_10_tensor = torch.tensor(grid_label_after_10_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
+            grid_label_after_30_tensor = torch.tensor(grid_label_after_30_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
+            grid_label_after_50_tensor = torch.tensor(grid_label_after_50_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
             
             net.train()
             optimizer.zero_grad()
@@ -294,7 +302,7 @@ if __name__ == "__main__":
 
             euclidean_loss = torch.norm(output_cell.float() - label_cell.float(), dim=1).mean()
 
-            training_step_loss = cross_entropy_loss + euclidean_loss
+            training_step_loss = cross_entropy_loss + 0.1 * euclidean_loss
             
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
