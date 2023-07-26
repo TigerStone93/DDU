@@ -112,6 +112,7 @@ if __name__ == "__main__":
                 mod=args.mod,
                 coeff=args.coeff,
                 seed=(5*i+1))
+            
         else: # 
             train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
             saved_model_name = os.path.join(
@@ -147,7 +148,7 @@ if __name__ == "__main__":
             (_, _, _), (_, _, _), t_m1_auroc, t_m1_auprc = get_roc_auc_ensemble(t_ensemble, test_loader, ood_test_loader, "mutual_information", device)
             (_, _, _), (_, _, _), t_m2_auroc, t_m2_auprc = get_roc_auc_ensemble(t_ensemble, test_loader, ood_test_loader, "entropy", device)
 
-        else:
+        else: #
             (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
             ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
@@ -158,7 +159,7 @@ if __name__ == "__main__":
             (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
             t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
 
-            if (args.model_type == "gmm"):
+            if (args.model_type == "gmm"): # gmm
                 # Evaluate a GMM model
                 print("GMM Model")
                 embeddings, labels = get_embeddings(
@@ -187,20 +188,14 @@ if __name__ == "__main__":
                     print("Runtime Error caught: " + str(e))
                     continue
 
-            else:
+            else: # softmax
                 # Evaluate a normal Softmax model
                 print("Softmax Model")
-                (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc(
-                    net, test_loader, ood_test_loader, logsumexp, device, confidence=True
-                )
+                (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc(net, test_loader, ood_test_loader, logsumexp, device, confidence=True)
                 (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc(net, test_loader, ood_test_loader, entropy, device)
 
-                (_, _, _), (_, _, _), t_m1_auroc, t_m1_auprc = get_roc_auc(
-                    temp_scaled_net, test_loader, ood_test_loader, logsumexp, device, confidence=True,
-                )
-                (_, _, _), (_, _, _), t_m2_auroc, t_m2_auprc = get_roc_auc(
-                    temp_scaled_net, test_loader, ood_test_loader, entropy, device
-                )
+                (_, _, _), (_, _, _), t_m1_auroc, t_m1_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, logsumexp, device, confidence=True,)
+                (_, _, _), (_, _, _), t_m2_auroc, t_m2_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, entropy, device)
 
         accuracies.append(accuracy)
 
