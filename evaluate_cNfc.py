@@ -95,6 +95,7 @@ if __name__ == "__main__":
 
     for i in range(args.runs):
         print(f"Evaluating run: {(i+1)}")
+        
         # Loading the model(s)
         train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
         saved_model_name = os.path.join(
