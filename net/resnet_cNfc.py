@@ -97,6 +97,9 @@ class ResNet(nn.Module):
     
     def forward(self, map_input_tensor, record_input_tensor):
         out = self.convolutional_block_1(map_input_tensor)
+        """
+        out = self.convolutional_block_1(map_input_tensor.unsqueeze(0)) # Adding batch dimension ex) (100, 100) → (1, 100, 100)
+        """
         out = self.convolutional_block_2(out)
         out = self.convolutional_block_3(out)
         out = self.convolutional_block_4(out)
