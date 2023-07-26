@@ -152,7 +152,7 @@ if __name__ == "__main__":
                 continue
 
         else: # softmax
-            # Evaluate a normal Softmax model
+            # Evaluate a normal softmax model
             print("Softmax Model")
             (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc(net, test_loader, ood_test_loader, logsumexp, device, confidence=True)
             (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc(net, test_loader, ood_test_loader, entropy, device)
