@@ -9,6 +9,7 @@ from utils.ensemble_utils import ensemble_forward_pass
 from metrics.classification_metrics import get_logits_labels
 from metrics.uncertainty_confidence import entropy, logsumexp, confidence
 
+# ========================================================================================== #
 
 def get_roc_auc(net, test_loader, ood_test_loader, uncertainty, device, confidence=False):
     logits, _ = get_logits_labels(net, test_loader, device)
@@ -40,6 +41,7 @@ def get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=False
 
     return (fpr, tpr, thresholds), (precision, recall, prc_thresholds), auroc, auprc
 
+# ========================================================================================== #
 
 def get_roc_auc_ensemble(model_ensemble, test_loader, ood_test_loader, uncertainty, device):
     bin_labels_uncertainties = None
