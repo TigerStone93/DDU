@@ -102,7 +102,9 @@ class ResNet(nn.Module):
         out = self.convolutional_block_4(out)
         
         out = out.view(out.size(0), -1) # Flattening
-        # record_input_tensor = record_input_tensor.view(record_input_tensor.size(0), -1)  
+        """
+        record_input_tensor = record_input_tensor.view(record_input_tensor.size(0), -1)
+        """
         out = torch.cat((out, record_input_tensor), dim=1) # Concatenating
         
         out = self.fully_connected_block_1(out)
