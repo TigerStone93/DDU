@@ -19,13 +19,15 @@ def entropy(logits):
 def logsumexp(logits):
     return torch.logsumexp(logits, dim=1, keepdim=False)
 
-# ============================================================ #
+# ========================================================================================== #
 
 # For softmax
 def confidence(logits):
     p = F.softmax(logits, dim=1)
     confidence, _ = torch.max(p, dim=1)
     return confidence
+
+# ========================================================================================== #
 
 # For ensemble
 def entropy_prob(probs):
