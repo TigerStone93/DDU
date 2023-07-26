@@ -109,6 +109,8 @@ if __name__ == "__main__":
         net.load_state_dict(torch.load(str(saved_model_name)))
         net.eval()
 
+        # ============================== #
+
         # Evaluating the model(s)
         (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
         ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
