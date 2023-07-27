@@ -178,13 +178,13 @@ if __name__ == "__main__":
                 dy_30 = after_30_y - current_y
                 dx_50 = after_50_x - current_x
                 dy_50 = after_50_y - current_y
-                yaw_radian = np.radians(yaw)             
-                after_10_x_rotated = -dx_10 * np.sin(yaw_radian) + dy_10 * np.cos(yaw_radian)
-                after_10_y_rotated = dx_10 * np.cos(yaw_radian) + dy_10 * np.sin(yaw_radian)                
-                after_30_x_rotated = -dx_30 * np.sin(yaw_radian) + dy_30 * np.cos(yaw_radian)
-                after_30_y_rotated = dx_30 * np.cos(yaw_radian) + dy_30 * np.sin(yaw_radian)                
-                after_50_x_rotated = -dx_50 * np.sin(yaw_radian) + dy_50 * np.cos(yaw_radian)
-                after_50_y_rotated = dx_50 * np.cos(yaw_radian) + dy_50 * np.sin(yaw_radian)
+                current_yaw_radian = np.radians(current_yaw)            
+                after_10_x_rotated = -dx_10 * np.sin(current_yaw_radian) + dy_10 * np.cos(current_yaw_radian)
+                after_10_y_rotated = dx_10 * np.cos(current_yaw_radian) + dy_10 * np.sin(current_yaw_radian)                
+                after_30_x_rotated = -dx_30 * np.sin(current_yaw_radian) + dy_30 * np.cos(current_yaw_radian)
+                after_30_y_rotated = dx_30 * np.cos(current_yaw_radian) + dy_30 * np.sin(current_yaw_radian)                
+                after_50_x_rotated = -dx_50 * np.sin(current_yaw_radian) + dy_50 * np.cos(current_yaw_radian)
+                after_50_y_rotated = dx_50 * np.cos(current_yaw_radian) + dy_50 * np.sin(current_yaw_radian)
 
                 grid_after_10_x = int(grid_size[0] // 2 + round(after_10_x_rotated))
                 grid_after_10_y = int(grid_size[1] // 2 + round(after_10_y_rotated))
