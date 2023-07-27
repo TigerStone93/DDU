@@ -294,15 +294,25 @@ if __name__ == "__main__":
             cross_entropy_loss_3 = loss_function_dict[args.loss_function](output_after_50_flattened, label_after_50_flattened) # 0 ~ inf
 
             # Calculating the euclidean distance loss
-            _, output_indices = torch.max(output_flattened, dim=1)
-            _, label_indices = torch.max(label_flattened, dim=1)
-
-            output_cell = torch.stack((output_indices // 91, output_indices % 91), dim=1)
-            label_cell = torch.stack((label_indices // 91, label_indices % 91), dim=1)
-
-            euclidean_distance_loss = torch.norm(output_cell.float() - label_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
-
-            training_step_loss = 0.3*cross_entropy_loss_1 + 0.3*cross_entropy_loss_2 + 0.3*cross_entropy_loss_3 + 0.1*euclidean_distance_loss
+            _, output_after_10_indices = torch.max(output_after_10_flattened, dim=1)
+            _, label_after_10_indices = torch.max(label_after_10_flattened, dim=1)
+            _, output_after_30_indices = torch.max(output_after_30_flattened, dim=1)
+            _, label_after_30_indices = torch.max(label_after_30_flattened, dim=1)
+            _, output_after_50_indices = torch.max(output_after_50_flattened, dim=1)
+            _, label_after_50_indices = torch.max(label_after_50_flattened, dim=1)
+            
+            output_after_10_cell = torch.stack((output_after_10_indices // 91, output_after_10_indices % 91), dim=1)
+            label_after_10_cell = torch.stack((label_after_10_indices // 91, label_after_10_indices % 91), dim=1)
+            output_after_30_cell = torch.stack((output_after_30_indices // 91, output_after_30_indices % 91), dim=1)
+            label_after_30_cell = torch.stack((label_after_30_indices // 91, label_after_30_indices % 91), dim=1)
+            output_after_50_cell = torch.stack((output_after_50_indices // 91, output_after_50_indices % 91), dim=1)
+            label_after_50_cell = torch.stack((label_after_50_indices // 91, label_after_50_indices % 91), dim=1)
+            
+            euclidean_distance_loss_1 = torch.norm(output_after_10_cell.float() - label_after_10_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
+            euclidean_distance_loss_2 = torch.norm(output_after_30_cell.float() - label_after_30_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
+            euclidean_distance_loss_3 = torch.norm(output_after_50_cell.float() - label_after_50_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
+            
+            training_step_loss = 3/10*cross_entropy_loss_1 + 3/10*cross_entropy_loss_2 + 3/10*cross_entropy_loss_3 + 1/30*euclidean_distance_loss_1 + 1/30*euclidean_distance_loss_2 + 1/30*euclidean_distance_loss_3
             
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
