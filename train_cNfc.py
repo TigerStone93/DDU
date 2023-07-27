@@ -39,7 +39,7 @@ def training_args():
 
     parser = argparse.ArgumentParser(description="Args for training parameters", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
     parser.add_argument("--seed", type=int, dest="seed", required=True, help="Seed to use")
-    parser.add_argument("--dataset", type=str, default=default_dataset, dest="dataset", help="dataset to train on",)
+    parser.add_argument("--dataset", type=str, dest="dataset", help="dataset to train on",)
 
     parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
     parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
