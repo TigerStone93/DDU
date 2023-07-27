@@ -14,7 +14,7 @@ import torch.backends.cudnn as cudnn
 from torch.nn import functional as F
 
 # Import the network models
-from resnet_cNfc import resnet18, resnet50
+from resnet_cNfc import resnet18
 
 # Tensorboard utilities
 from torch.utils.tensorboard import SummaryWriter
