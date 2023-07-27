@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     # Drawing the map image for training
     lanes = []
-    with open("lane_town03.txt", "rt") as rf:
+    with open("data/lane_town03.txt", "rt") as rf:
         for line in rf.readlines():
             lane = []
             for s in line.split("\t"):
