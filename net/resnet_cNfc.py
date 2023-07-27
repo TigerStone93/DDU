@@ -128,16 +128,3 @@ def resnet18(**kwargs):
     model = ResNet(
         **kwargs)
     return model
-
-"""
-def resnet50(spectral_normalization=True, mod=True, temp=1.0, mnist=False, **kwargs):
-    model = ResNet(
-        Bottleneck,
-        [3, 4, 6, 3],
-        spectral_normalization=spectral_normalization,
-        mod=mod,
-        temp=temp,
-        mnist=mnist,
-        **kwargs)
-    return model
-"""
