@@ -7,6 +7,7 @@ import numpy as np
 import argparse
 import random
 import math
+import time
 import torch
 from torch import optim
 import torch.backends.cudnn as cudnn
@@ -74,7 +75,7 @@ dataset_num_outputs = {"cifar10": 10, "cifar100": 100, "svhn": 10, "dirty_mnist"
 models = {
     "resnet18": resnet18,}
 
-grid_size = (121, 121) # 97: 0/48/96 0/32/64/96 or 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
+grid_size = (127, 127) # 97: 0/48/96 0/32/64/96 or 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
 
 # ========================================================================================== #
 
@@ -148,7 +149,8 @@ if __name__ == "__main__":
     # ============================== #
     
     for epoch in range(0, args.epoch):
-        print("Starting epoch", epoch)
+        print("Starting epoch", epoch)        
+        timestamp_step_start = time.time()
         
         # Loading the matrix dataset for preprocessing
         record = np.load("data/log_speed30/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
@@ -157,10 +159,9 @@ if __name__ == "__main__":
         
         # Sampling the 100 indices from 0 to 4950
         num_index_samples = 100
-        num_vehicle_samples = 32 # Vehicles are spawned in random points for each iteration.
+        num_vehicle_samples = 100 # Vehicles are spawned in random points for each iteration.
         training_epoch_loss = 0
         for step in record_index_shuffled[:num_index_samples]:
-            print("Counter")
             current_record = record[step]
             current_record_sampled = record[step][:num_vehicle_samples] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
             
@@ -303,19 +304,19 @@ if __name__ == "__main__":
             _, output_after_50_indices = torch.max(output_after_50_flattened, dim=1)
             _, label_after_50_indices = torch.max(label_after_50_flattened, dim=1)
             
-            output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size[1]), dim=1)
-            label_after_10_cell = torch.stack((label_after_10_indices // grid_size[0], label_after_10_indices % grid_size[1]), dim=1)
-            output_after_30_cell = torch.stack((output_after_30_indices // grid_size[0], output_after_30_indices % grid_size[1]), dim=1)
-            label_after_30_cell = torch.stack((label_after_30_indices // grid_size[0], label_after_30_indices % grid_size[1]), dim=1)
-            output_after_50_cell = torch.stack((output_after_50_indices // grid_size[0], output_after_50_indices % grid_size[1]), dim=1)
-            label_after_50_cell = torch.stack((label_after_50_indices // grid_size[0], label_after_50_indices % grid_size[1]), dim=1)
+            output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size[0]), dim=1)
+            label_after_10_cell = torch.stack((label_after_10_indices // grid_size[0], label_after_10_indices % grid_size[0]), dim=1)
+            output_after_30_cell = torch.stack((output_after_30_indices // grid_size[0], output_after_30_indices % grid_size[0]), dim=1)
+            label_after_30_cell = torch.stack((label_after_30_indices // grid_size[0], label_after_30_indices % grid_size[0]), dim=1)
+            output_after_50_cell = torch.stack((output_after_50_indices // grid_size[0], output_after_50_indices % grid_size[0]), dim=1)
+            label_after_50_cell = torch.stack((label_after_50_indices // grid_size[0], label_after_50_indices % grid_size[0]), dim=1)
             
             euclidean_distance_loss_1 = torch.norm(output_after_10_cell.float() - label_after_10_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_2 = torch.norm(output_after_30_cell.float() - label_after_30_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_3 = torch.norm(output_after_50_cell.float() - label_after_50_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             
             training_step_loss = 3/10*cross_entropy_loss_1 + 3/10*cross_entropy_loss_2 + 3/10*cross_entropy_loss_3 + 1/30*euclidean_distance_loss_1 + 1/30*euclidean_distance_loss_2 + 1/30*euclidean_distance_loss_3
-            
+                        
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
             # Updating the parameters
@@ -333,6 +334,9 @@ if __name__ == "__main__":
         if (epoch + 1) % args.save_interval == 0:
             saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
             torch.save(net.state_dict(), saved_name)
+            
+        timestamp_step_end = time.time()
+        print(f"Time elapsing : {timestamp_step_end - timestamp_step_start:.2f} seconds")
 
     # Saving the model before completion
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
