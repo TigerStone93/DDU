@@ -239,7 +239,7 @@ if __name__ == "__main__":
             for cr in current_record:
                 position = (cr[:2] + compensator) * 8.
                 M1 = np.float32( [ [1, 0, -position[0]], [0, 1, -position[1]], [0, 0, 1] ] )
-                M2 = cv2.getRotationMatrix2D((0, 0), s[2] + 90, 1.0)
+                M2 = cv2.getRotationMatrix2D((0, 0), cr[2] + 90, 1.0)
                 M2 = np.append(M2, np.float32([[0, 0, 1]]), axis=0)
                 M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
