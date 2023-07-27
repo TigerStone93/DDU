@@ -29,7 +29,7 @@ class SpectralNormalizedConvolutionalBlock(nn.Module):
         super(SpectralNormalizedConvolutionalBlock, self).__init__()
         self.convolutional_1 = utils.spectral_norm(nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False))
         self.batch_normalization_1 = nn.BatchNorm2d(out_channels)
-        self.convolutional_2 = utils.spectral_norm(nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False))
+        self.convolutional_2 = utils.spectral_norm(nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False))
         self.batch_normalization_2 = nn.BatchNorm2d(out_channels)
 
         self.shortcut = nn.Sequential()
@@ -80,33 +80,36 @@ class SpectralNormalizedFullyConnectedBlock(nn.Module):
 class ResNet(nn.Module):
     def __init__(
         self,
-        num_outputs = (91, 91),):
+        num_outputs,):
         super(ResNet, self).__init__()
+        self.num_outputs = num_outputs
 
-        self.convolutional_block_1 = SpectralNormalizedConvolutionalBlock(3, 16) # [16, 300, 300]
-        self.convolutional_block_2 = SpectralNormalizedConvolutionalBlock(16, 32) # [32, 150, 150]
-        self.convolutional_block_3 = SpectralNormalizedConvolutionalBlock(32, 64) # [64, 75, 75]
-        self.convolutional_block_4 = SpectralNormalizedConvolutionalBlock(64, 128) # [128, 38, 38]
+        self.convolutional_block_1 = SpectralNormalizedConvolutionalBlock(3, 16, 1) # [16, 300, 300]
+        self.convolutional_block_2 = SpectralNormalizedConvolutionalBlock(16, 32, 2) # [32, 150, 150]
+        self.convolutional_block_3 = SpectralNormalizedConvolutionalBlock(32, 64, 2) # [64, 75, 75]
+        self.convolutional_block_4 = SpectralNormalizedConvolutionalBlock(64, 128, 2) # [128, 38, 38]
         
         self.fully_connected_block_1 = SpectralNormalizedFullyConnectedBlock(128*38*38 + 5, 512)
         self.fully_connected_block_2 = SpectralNormalizedFullyConnectedBlock(512, 256)
         self.fully_connected_block_3 = SpectralNormalizedFullyConnectedBlock(256, 128)
-        self.fully_connected_block_4_1 = SpectralNormalizedFullyConnectedBlock(128, num_outputs[0]*num_outputs[1])
-        self.fully_connected_block_4_2 = SpectralNormalizedFullyConnectedBlock(128, num_outputs[0]*num_outputs[1])
-        self.fully_connected_block_4_3 = SpectralNormalizedFullyConnectedBlock(128, num_outputs[0]*num_outputs[1])
+        self.fully_connected_block_4_1 = SpectralNormalizedFullyConnectedBlock(128, self.num_outputs[0]*self.num_outputs[1])
+        self.fully_connected_block_4_2 = SpectralNormalizedFullyConnectedBlock(128, self.num_outputs[0]*self.num_outputs[1])
+        self.fully_connected_block_4_3 = SpectralNormalizedFullyConnectedBlock(128, self.num_outputs[0]*self.num_outputs[1])
         
     # ============================================================ #
     
     def forward(self, map_input_tensor, record_input_tensor):
         out = self.convolutional_block_1(map_input_tensor)
+        # print("1 :", out.shape)
         out = self.convolutional_block_2(out)
+        # print("2 :", out.shape)
         out = self.convolutional_block_3(out)
+        # print("3 :", out.shape)
         out = self.convolutional_block_4(out)
+        # print("4 :", out.shape)
         
-        out = out.view(out.size(0), -1) # Flattening
-        """
-        record_input_tensor = record_input_tensor.view(record_input_tensor.size(0), -1)
-        """
+        out = out.reshape(out.size(0), -1) # Flattening
+        # record_input_tensor = record_input_tensor.view(record_input_tensor.size(0), -1)
         out = torch.cat((out, record_input_tensor), dim=1) # Concatenating
         
         out = self.fully_connected_block_1(out)
@@ -116,9 +119,9 @@ class ResNet(nn.Module):
         out_2 = self.fully_connected_block_4_2(out)
         out_3 = self.fully_connected_block_4_3(out)
 
-        out_1 = out_1.view(out_1.size(0), 91, 91)
-        out_2 = out_2.view(out_2.size(0), 91, 91)
-        out_3 = out_3.view(out_3.size(0), 91, 91)
+        out_1 = out_1.view(out_1.size(0), self.num_outputs[0], self.num_outputs[1])
+        out_2 = out_2.view(out_2.size(0), self.num_outputs[0], self.num_outputs[1])
+        out_3 = out_3.view(out_3.size(0), self.num_outputs[0], self.num_outputs[1])
         return out_1, out_2, out_3
 
 # ========================================================================================== #
