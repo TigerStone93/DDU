@@ -304,12 +304,12 @@ if __name__ == "__main__":
             _, output_after_50_indices = torch.max(output_after_50_flattened, dim=1)
             _, label_after_50_indices = torch.max(label_after_50_flattened, dim=1)
             
-            output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size[0]), dim=1)
-            label_after_10_cell = torch.stack((label_after_10_indices // grid_size[0], label_after_10_indices % grid_size[0]), dim=1)
-            output_after_30_cell = torch.stack((output_after_30_indices // grid_size[0], output_after_30_indices % grid_size[0]), dim=1)
-            label_after_30_cell = torch.stack((label_after_30_indices // grid_size[0], label_after_30_indices % grid_size[0]), dim=1)
-            output_after_50_cell = torch.stack((output_after_50_indices // grid_size[0], output_after_50_indices % grid_size[0]), dim=1)
-            label_after_50_cell = torch.stack((label_after_50_indices // grid_size[0], label_after_50_indices % grid_size[0]), dim=1)
+            output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size1]), dim=1)
+            label_after_10_cell = torch.stack((label_after_10_indices // grid_size[0], label_after_10_indices % grid_size[1]), dim=1)
+            output_after_30_cell = torch.stack((output_after_30_indices // grid_size[0], output_after_30_indices % grid_size[1]), dim=1)
+            label_after_30_cell = torch.stack((label_after_30_indices // grid_size[0], label_after_30_indices % grid_size[1]), dim=1)
+            output_after_50_cell = torch.stack((output_after_50_indices // grid_size[0], output_after_50_indices % grid_size[1]), dim=1)
+            label_after_50_cell = torch.stack((label_after_50_indices // grid_size[0], label_after_50_indices % grid_size[1]), dim=1)
             
             euclidean_distance_loss_1 = torch.norm(output_after_10_cell.float() - label_after_10_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_2 = torch.norm(output_after_30_cell.float() - label_after_30_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
