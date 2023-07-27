@@ -16,7 +16,7 @@ def entropy(logits):
     return entropy
 
 # For GMM and softmax
-# logsumexp is sensitive to greater value because of exp(). It can show similar effect to using mean() after max().
+# logsumexp() is sensitive to greater value because of exp(). It can show similar effect to using mean() after max().
 def logsumexp(logits):
     return torch.logsumexp(logits, dim=1, keepdim=False)
 
