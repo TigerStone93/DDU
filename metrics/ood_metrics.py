@@ -31,12 +31,12 @@ def get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=False
     
     # For out-of-distribution
     bin_labels = torch.cat((bin_labels, torch.ones(ood_uncertainties.shape[0]).to(device)))
+    ood_scores = ood_uncertainties
     
-    # For logsumexp, not entropy
+    # Preprocessing for logsumexp, not entropy
     if confidence:
         bin_labels = 1 - bin_labels
     
-    ood_scores = ood_uncertainties
     scores = torch.cat((in_scores, ood_scores))
     
     # Calculating the fpr(false positive rate), tpr(true positive rate), and thresholds
