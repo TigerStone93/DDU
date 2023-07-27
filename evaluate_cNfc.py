@@ -112,8 +112,8 @@ if __name__ == "__main__":
         # ============================== #
 
         # Evaluating the model
-        # ece(expected calibration error) represents quality of aleatoric uncertainty.
         (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
+        # ece(expected calibration error) represents quality of aleatoric uncertainty. ece measures expectation of difference between accuracy and confidence
         ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
         # Temperature scaling the trained model (Calibrating the classifier to adjust the confidence of prediction)
@@ -121,8 +121,8 @@ if __name__ == "__main__":
         temp_scaled_net.set_temperature(val_loader)
         topt = temp_scaled_net.temperature
 
-        # ece(expected calibration error) represents quality of aleatoric uncertainty.
         (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
+        # ece(expected calibration error) represents quality of aleatoric uncertainty.
         t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
 
         # ============================== #
@@ -143,12 +143,12 @@ if __name__ == "__main__":
                 logits, labels = gmm_evaluate(net, gaussians_model, test_loader, device=device, num_classes=num_classes, storage_device=device,)
 
                 ood_logits, ood_labels = gmm_evaluate(net, gaussians_model, ood_test_loader, device=device, num_classes=num_classes, storage_device=device,)
-
+                
+                # auroc(area under receiver operating characteristic curve) represents quality of epistemic uncertainty.
                 (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc_logits(logits, ood_logits, logsumexp, device, confidence=True)
                 (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc_logits(logits, ood_logits, entropy, device)
 
                 # In case of gmm, temperature scaling is meaningless.
-                # auroc(area under receiver operating characteristic curve) represents quality of epistemic uncertainty.
                 t_m1_auroc = m1_auroc
                 t_m1_auprc = m1_auprc
                 t_m2_auroc = m2_auroc
