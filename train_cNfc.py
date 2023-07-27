@@ -161,7 +161,7 @@ if __name__ == "__main__":
         print("Starting epoch", epoch)
         
         # Loading the matrix dataset for preprocessing
-        record = np.load("gathered/log1/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
+        record = np.load("data/log_speed30/" + str(random.randrange(1000)) + ".npy") # (5000, number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index)
         
