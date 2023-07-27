@@ -43,7 +43,7 @@ class SpectralNormalizedConvolutionalBlock(nn.Module):
     
     def forward(self, x):
         out = self.leaky_relu(self.batch_normalization_1(self.convolutional_1(x))) # relu
-        out = self.batch_normalization_2(self.convolutional_2(out)
+        out = self.batch_normalization_2(self.convolutional_2(out))
         out += self.shortcut(x)
         out = self.leaky_relu(out) # relu
         return out
