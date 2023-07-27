@@ -106,7 +106,8 @@ if __name__ == "__main__":
     print("CUDA set: " + str(cuda))
 
     # Setting the num_outputs from dataset
-    num_outputs = dataset_num_outputs[args.dataset]
+    # num_outputs = dataset_num_outputs[args.dataset]
+    num_outputs = grid_size
 
     # Choosing the model to train
     net = models[args.model](
@@ -276,15 +277,21 @@ if __name__ == "__main__":
             
             net.train()
             optimizer.zero_grad()
-            output = net(map_input_tensor, record_input_tensor)
+            output_after_10, output_after_30, output_after_50 = net(map_input_tensor, record_input_tensor)
 
             # Flattening the output and label
-            output_flattened = output.view(output.size(0), -1)
-            label_flattened = grid_label_tensor.view(grid_label_tensor.size(0), -1)
+            output_after_10_flattened = output_after_10.view(output_after_10.size(0), -1)
+            output_after_30_flattened = output_after_30.view(output_after_30.size(0), -1)
+            output_after_50_flattened = output_after_50.view(output_after_50.size(0), -1)
+            label_after_10_flattened = grid_label_after_10_tensor.view(grid_label_after_10_tensor.size(0), -1)
+            label_after_30_flattened = grid_label_after_30_tensor.view(grid_label_after_30_tensor.size(0), -1)
+            label_after_50_flattened = grid_label_after_50_tensor.view(grid_label_after_50_tensor.size(0), -1)
             
             # Calculating the cross entropy loss by applying the softmax output 
             loss_function_dict = {"cross_entropy": F.cross_entropy}
-            cross_entropy_loss = loss_function_dict[args.loss_function](output_flattened, label_flattened) # 0 ~ inf
+            cross_entropy_loss_1 = loss_function_dict[args.loss_function](output_after_10_flattened, label_after_10_flattened) # 0 ~ inf
+            cross_entropy_loss_2 = loss_function_dict[args.loss_function](output_after_30_flattened, label_after_30_flattened) # 0 ~ inf
+            cross_entropy_loss_3 = loss_function_dict[args.loss_function](output_after_50_flattened, label_after_50_flattened) # 0 ~ inf
 
             # Calculating the euclidean distance loss
             _, output_indices = torch.max(output_flattened, dim=1)
@@ -295,7 +302,7 @@ if __name__ == "__main__":
 
             euclidean_distance_loss = torch.norm(output_cell.float() - label_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
 
-            training_step_loss = cross_entropy_loss + 0.1 * euclidean_distance_loss
+            training_step_loss = 0.3*cross_entropy_loss_1 + 0.3*cross_entropy_loss_2 + 0.3*cross_entropy_loss_3 + 0.1*euclidean_distance_loss
             
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
