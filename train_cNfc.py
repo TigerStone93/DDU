@@ -22,12 +22,6 @@ from torch.utils.tensorboard import SummaryWriter
 # ========================================================================================== #
 
 def training_args():
-    default_dataset = "cifar10"
-    dataset_root = "./"
-    ood_dataset = "svhn"
-    train_batch_size = 128
-    test_batch_size = 128
-
     learning_rate = 0.1
     momentum = 0.9
     optimizer = "sgd"
@@ -46,9 +40,6 @@ def training_args():
     parser = argparse.ArgumentParser(description="Args for training parameters", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
     parser.add_argument("--seed", type=int, dest="seed", required=True, help="Seed to use")
     parser.add_argument("--dataset", type=str, default=default_dataset, dest="dataset", help="dataset to train on",)
-    parser.add_argument("--dataset-root", type=str, default=dataset_root, dest="dataset_root", help="path of a dataset (useful for dirty mnist)",)
-
-    parser.add_argument("-b", type=int, default=train_batch_size, dest="train_batch_size", help="Batch size",)
 
     parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
     parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
