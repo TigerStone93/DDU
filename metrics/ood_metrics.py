@@ -26,7 +26,7 @@ def get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=False
     ood_uncertainties = uncertainty(ood_logits)
     
     # For in-distribution
-    bin_labels = torch.zeros(uncertainties.shape[0]).to(device)
+    bin_labels = torch.zeros(uncertainties.shape[0]).to(device) # binary labels
     in_scores = uncertainties
     
     # For out-of-distribution
