@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # Evaluating the models
     accuracies = []
 
-    # Pre temperature scaling
+    # For temperature scaled model
     # m1 - Uncertainty/Confidence Metric 1
     #      for deterministic model: logsumexp
     #      for ensemble: entropy
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     m2_aurocs = []
     m2_auprcs = []
 
-    # Post temperature scaling
+    # For temperature scaled model
     t_eces = []
     t_m1_aurocs = []
     t_m1_auprcs = []
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     for i in range(args.runs):
         print(f"Evaluating run: {(i+1)}")
         
-        # Loading the model(s)
+        # Loading the model
         train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
         saved_model_name = os.path.join(args.load_loc, "Run" + str(i + 1), model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",)
         net = models[args.model](spectral_normalization=args.sn, mod=args.mod, coeff=args.coeff, num_classes=num_classes, temp=1.0,)
@@ -111,21 +111,24 @@ if __name__ == "__main__":
 
         # ============================== #
 
-        # Evaluating the model(s)
-        (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
+        # Evaluating the model
         # ece(expected calibration error) represents quality of aleatoric uncertainty.
+        (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
         ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
-        # Temperature scaling the trained network (Calibrating the classifier to adjust the confidence of prediction)
+        # Temperature scaling the trained model (Calibrating the classifier to adjust the confidence of prediction)
         temp_scaled_net = ModelWithTemperature(net)
         temp_scaled_net.set_temperature(val_loader)
         topt = temp_scaled_net.temperature
 
+        # ece(expected calibration error) represents quality of aleatoric uncertainty.
         (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
         t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
 
+        # ============================== #
+        
         if (args.model_type == "gmm"): # gmm
-            # Evaluate a GMM model
+            # Evaluating the GMM model
             print("GMM Model")
             embeddings, labels = get_embeddings(
                 net,
@@ -155,8 +158,10 @@ if __name__ == "__main__":
                 print("Runtime Error caught: " + str(e))
                 continue
 
+        # ============================== #
+        
         else: # softmax
-            # Evaluate a normal softmax model
+            # Evaluating the normal softmax model
             print("Softmax Model")
             (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc(net, test_loader, ood_test_loader, logsumexp, device, confidence=True)
             (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc(net, test_loader, ood_test_loader, entropy, device)
@@ -164,6 +169,8 @@ if __name__ == "__main__":
             (_, _, _), (_, _, _), t_m1_auroc, t_m1_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, logsumexp, device, confidence=True,)
             (_, _, _), (_, _, _), t_m2_auroc, t_m2_auprc = get_roc_auc(temp_scaled_net, test_loader, ood_test_loader, entropy, device)
 
+        # ============================== #
+        
         accuracies.append(accuracy)
 
         # Pre-temperature results
@@ -180,6 +187,8 @@ if __name__ == "__main__":
         t_m2_aurocs.append(t_m2_auroc)
         t_m2_auprcs.append(t_m2_auprc)
 
+    # ============================== #
+    
     accuracy_tensor = torch.tensor(accuracies)
     ece_tensor = torch.tensor(eces)
     m1_auroc_tensor = torch.tensor(m1_aurocs)
