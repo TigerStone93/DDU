@@ -80,7 +80,7 @@ class SpectralNormalizedFullyConnectedBlock(nn.Module):
 class ResNet(nn.Module):
     def __init__(
         self,
-        num_outputs = 10,):
+        num_outputs = (91, 91),):
         super(ResNet, self).__init__()
 
         self.convolutional_block_1 = SpectralNormalizedConvolutionalBlock(3, 16) # [16, 300, 300]
@@ -91,7 +91,9 @@ class ResNet(nn.Module):
         self.fully_connected_block_1 = SpectralNormalizedFullyConnectedBlock(128*38*38 + 5, 512)
         self.fully_connected_block_2 = SpectralNormalizedFullyConnectedBlock(512, 256)
         self.fully_connected_block_3 = SpectralNormalizedFullyConnectedBlock(256, 128)
-        self.fully_connected_block_4 = SpectralNormalizedFullyConnectedBlock(128, num_outputs)
+        self.fully_connected_block_4_1 = SpectralNormalizedFullyConnectedBlock(128, num_outputs[0]*num_outputs[1])
+        self.fully_connected_block_4_2 = SpectralNormalizedFullyConnectedBlock(128, num_outputs[0]*num_outputs[1])
+        self.fully_connected_block_4_3 = SpectralNormalizedFullyConnectedBlock(128, num_outputs[0]*num_outputs[1])
         
     # ============================================================ #
     
@@ -110,10 +112,14 @@ class ResNet(nn.Module):
         out = self.fully_connected_block_1(out)
         out = self.fully_connected_block_2(out)
         out = self.fully_connected_block_3(out)
-        out = self.fully_connected_block_4(out)
+        out_1 = self.fully_connected_block_4_1(out)
+        out_2 = self.fully_connected_block_4_2(out)
+        out_3 = self.fully_connected_block_4_3(out)
 
-        out = out.view(out.size(0), 91, 91)
-        return out
+        out_1 = out_1.view(out_1.size(0), 91, 91)
+        out_2 = out_2.view(out_2.size(0), 91, 91)
+        out_3 = out_3.view(out_3.size(0), 91, 91)
+        return out_1, out_2, out_3
 
 # ========================================================================================== #
 
