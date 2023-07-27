@@ -193,9 +193,7 @@ if __name__ == "__main__":
                 grid_after_50_x = int(grid_size[0] // 2 + round(after_50_x_rotated))
                 grid_after_50_y = int(grid_size[1] // 2 + round(after_50_y_rotated))
 
-                """
-                print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
-                """
+                # print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
                     raise ValueError(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid")
                 if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
@@ -228,8 +226,8 @@ if __name__ == "__main__":
                     ax.plot(grid_after_30_x, grid_after_30_y, 'go')
                     ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
                     plt.show()
-            print("grid_label_after_10_array shape :", np.array(grid_label_after_10_array).shape) # (number_of_vehicles, grid_size[0], grid_size[1])
-            """
+                """
+            # print("grid_label_after_10_array shape :", np.array(grid_label_after_10_array).shape) # (number_of_vehicles, grid_size[0], grid_size[1])
             
             # Generating the map inputs by preprocessing
             for cr in current_record:
@@ -252,8 +250,8 @@ if __name__ == "__main__":
                 plt.imshow(map_rotated_n_cropped)
                 plt.axis('off')
                 plt.show()
-            print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
-            """
+                """
+            # print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
 
             map_input_tensor = torch.tensor(map_input_array).to(device) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
             record_input_tensor = torch.tensor(current_record).to(device) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
