@@ -113,6 +113,7 @@ if __name__ == "__main__":
 
         # Evaluating the model(s)
         (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
+        # ece(expected calibration error) represents quality of aleatoric uncertainty.
         ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
         # Temperature scaling the trained network (Calibrating the classifier to adjust the confidence of prediction)
@@ -143,6 +144,8 @@ if __name__ == "__main__":
                 (_, _, _), (_, _, _), m1_auroc, m1_auprc = get_roc_auc_logits(logits, ood_logits, logsumexp, device, confidence=True)
                 (_, _, _), (_, _, _), m2_auroc, m2_auprc = get_roc_auc_logits(logits, ood_logits, entropy, device)
 
+                # In case of gmm, temperature scaling is meaningless.
+                # auroc(area under receiver operating characteristic curve) represents quality of epistemic uncertainty.
                 t_m1_auroc = m1_auroc
                 t_m1_auprc = m1_auprc
                 t_m2_auroc = m2_auroc
