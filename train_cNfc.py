@@ -272,7 +272,7 @@ if __name__ == "__main__":
             # print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size height, map_cropping_size width, 3)
 
             map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples, 3, map_cropping_size height, map_cropping_size width)
-            record_input_tensor = torch.tensor(current_record_sampled).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+            record_input_tensor = torch.tensor(current_record_sampled, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_30_tensor = torch.tensor(np.array(grid_label_after_30_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
