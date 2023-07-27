@@ -21,21 +21,25 @@ def get_roc_auc(net, test_loader, ood_test_loader, uncertainty, device, confiden
 
 # For GMM and softmax
 def get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=False):
+    # For entropy and logsumexp
     uncertainties = uncertainty(logits)
     ood_uncertainties = uncertainty(ood_logits)
-
-    # In-distribution
+    
+    # For in-distribution
     bin_labels = torch.zeros(uncertainties.shape[0]).to(device)
     in_scores = uncertainties
-
-    # OOD
+    
+    # For out-of-distribution
     bin_labels = torch.cat((bin_labels, torch.ones(ood_uncertainties.shape[0]).to(device)))
-
+    
+    # For logsumexp, not entropy
     if confidence:
         bin_labels = 1 - bin_labels
-    ood_scores = ood_uncertainties  # entropy(ood_logits)
+    
+    ood_scores = ood_uncertainties
     scores = torch.cat((in_scores, ood_scores))
-
+    
+    # Calculating the fpr(false positive rate), tpr(true positive rate), and thresholds
     fpr, tpr, thresholds = metrics.roc_curve(bin_labels.cpu().numpy(), scores.cpu().numpy())
     precision, recall, prc_thresholds = metrics.precision_recall_curve(bin_labels.cpu().numpy(), scores.cpu().numpy())
     auroc = metrics.roc_auc_score(bin_labels.cpu().numpy(), scores.cpu().numpy())
@@ -60,30 +64,30 @@ def get_roc_auc_ensemble(model_ensemble, test_loader, ood_test_loader, uncertain
         for data, label in test_loader:
             data = data.to(device)
             label = label.to(device)
-
+            
             bin_label_uncertainty = torch.zeros(label.shape).to(device)
             if uncertainty == "mutual_information":
                 net_output, _, unc = ensemble_forward_pass(model_ensemble, data)
             else:
                 net_output, unc, _ = ensemble_forward_pass(model_ensemble, data)
-
+            
             bin_labels_uncertainties.append(bin_label_uncertainty)
             uncertainties.append(unc)
-
+            
         # Getting entropies for OOD data
         for data, label in ood_test_loader:
             data = data.to(device)
             label = label.to(device)
-
+            
             bin_label_uncertainty = torch.ones(label.shape).to(device)
             if uncertainty == "mutual_information":
                 net_output, _, unc = ensemble_forward_pass(model_ensemble, data)
             else:
                 net_output, unc, _ = ensemble_forward_pass(model_ensemble, data)
-
+            
             bin_labels_uncertainties.append(bin_label_uncertainty)
             uncertainties.append(unc)
-
+        
         bin_labels_uncertainties = torch.cat(bin_labels_uncertainties)
         uncertainties = torch.cat(uncertainties)
 
