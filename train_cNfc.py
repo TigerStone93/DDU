@@ -172,13 +172,13 @@ if __name__ == "__main__":
                 current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
                 # Rotating the heading of vehicle to align with center-top cell of grid
-                dx_10 = after_10_x - x
-                dy_10 = after_10_y - y
-                dx_30 = after_30_x - x
-                dy_30 = after_30_y - y
-                dx_50 = after_50_x - x
-                dy_50 = after_50_y - y
-                yaw_radian = np.radians(yaw)                
+                dx_10 = after_10_x - current_x
+                dy_10 = after_10_y - current_y
+                dx_30 = after_30_x - current_x
+                dy_30 = after_30_y - current_y
+                dx_50 = after_50_x - current_x
+                dy_50 = after_50_y - current_y
+                yaw_radian = np.radians(yaw)             
                 after_10_x_rotated = -dx_10 * np.sin(yaw_radian) + dy_10 * np.cos(yaw_radian)
                 after_10_y_rotated = dx_10 * np.cos(yaw_radian) + dy_10 * np.sin(yaw_radian)                
                 after_30_x_rotated = -dx_30 * np.sin(yaw_radian) + dy_30 * np.cos(yaw_radian)
