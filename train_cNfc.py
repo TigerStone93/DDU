@@ -4,14 +4,16 @@ Script for training a single model for OOD detection.
 
 import json
 import numpy as np
-import cv2
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import argparse
+import random
 import torch
 from torch import optim
 import torch.backends.cudnn as cudnn
 from torch.nn import functional as F
+
+import cv2
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 # Import the network models
 from resnet_cNfc import resnet18
