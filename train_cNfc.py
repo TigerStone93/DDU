@@ -6,6 +6,7 @@ import json
 import numpy as np
 import argparse
 import random
+import math
 import torch
 from torch import optim
 import torch.backends.cudnn as cudnn
@@ -33,7 +34,7 @@ def training_args():
     save_interval = 25
     save_loc = "./"
     saved_model_name = "resnet18_350.model"
-    epoch = 350
+    epoch = 5000
     first_milestone = 150  # Milestone for change in lr
     second_milestone = 250  # Milestone for change in lr
 
@@ -73,7 +74,7 @@ dataset_num_outputs = {"cifar10": 10, "cifar100": 100, "svhn": 10, "dirty_mnist"
 models = {
     "resnet18": resnet18,}
 
-grid_size = (91, 91) # 97: 0/48/96 0/32/64/96 or 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
+grid_size = (97, 97) # 97: 0/48/96 0/32/64/96 or 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
 
 # ========================================================================================== #
 
@@ -159,18 +160,23 @@ if __name__ == "__main__":
             current_record = record[step] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
             current_xy = current_record[:, :2]
             current_yaw = np.reshape(current_record[:, 2], (265, 1)) # positive yaw: counterclockwise, negative yaw: clockwise
+            current_velocity_xy = current_record[:, 3:]
             after_10_xy = record[step+10, :, :2]        
             after_30_xy = record[step+30, :, :2]
             after_50_xy = record[step+50, :, :2]
-            combined_record = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
+            # combined_record = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
+            combined_record = np.concatenate((current_xy, current_yaw, current_velocity_xy, after_10_xy, after_30_xy, after_50_xy), axis=1)
 
             # Generating the grid labels by preprocessing
             grid_label_after_10_array = []
             grid_label_after_30_array = []
             grid_label_after_50_array = []
-            for cr in combined_record:                
-                current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
+            for cr in combined_record:
+                # current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
+                current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
+                velocity = math.sqrt(current_velocity_x**2 + current_velocity_y**2) * 3.6
+                
                 # Rotating the heading of vehicle to align with center-top cell of grid
                 dx_10 = after_10_x - current_x
                 dy_10 = after_10_y - current_y
@@ -178,7 +184,7 @@ if __name__ == "__main__":
                 dy_30 = after_30_y - current_y
                 dx_50 = after_50_x - current_x
                 dy_50 = after_50_y - current_y
-                current_yaw_radian = np.radians(current_yaw)            
+                current_yaw_radian = np.radians(current_yaw)
                 after_10_x_rotated = -dx_10 * np.sin(current_yaw_radian) + dy_10 * np.cos(current_yaw_radian)
                 after_10_y_rotated = dx_10 * np.cos(current_yaw_radian) + dy_10 * np.sin(current_yaw_radian)                
                 after_30_x_rotated = -dx_30 * np.sin(current_yaw_radian) + dy_30 * np.cos(current_yaw_radian)
@@ -195,11 +201,11 @@ if __name__ == "__main__":
 
                 # print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
-                    raise ValueError(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid")
+                    raise ValueError(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
                 if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
-                    raise ValueError(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid")
+                    raise ValueError(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
-                    raise ValueError(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid")
+                    raise ValueError(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
                 
                 # Saving the grid label by stacking as array
                 grid_label_after_10 = np.zeros(grid_size)
@@ -241,7 +247,7 @@ if __name__ == "__main__":
                 M2 = np.append(M2, np.float32([[0, 0, 1]]), axis=0)
                 M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
                 M = np.matmul(np.matmul(M3, M2), M1)
-                map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size))
+                map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size)) # (width, height)
                 map_input_array.append(map_rotated_n_cropped.astype(np.float32) / 128.0 - 1.0) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
                 
                 # Visualizing the map
@@ -251,13 +257,13 @@ if __name__ == "__main__":
                 plt.axis('off')
                 plt.show()
                 """
-            # print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
+            # print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size height, map_cropping_size width, 3)
 
-            map_input_tensor = torch.tensor(map_input_array).to(device) # (number_of_vehicles, map_cropping_size, map_cropping_size, 3)
+            map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (number_of_vehicles, 3, map_cropping_size height, map_cropping_size width)
             record_input_tensor = torch.tensor(current_record).to(device) # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y])
-            grid_label_after_10_tensor = torch.tensor(grid_label_after_10_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
-            grid_label_after_30_tensor = torch.tensor(grid_label_after_30_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
-            grid_label_after_50_tensor = torch.tensor(grid_label_after_50_array).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
+            grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
+            grid_label_after_30_tensor = torch.tensor(np.array(grid_label_after_30_array)).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
+            grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (number_of_vehicles, grid_size[0], grid_size[1])
             
             net.train()
             optimizer.zero_grad()
@@ -285,12 +291,12 @@ if __name__ == "__main__":
             _, output_after_50_indices = torch.max(output_after_50_flattened, dim=1)
             _, label_after_50_indices = torch.max(label_after_50_flattened, dim=1)
             
-            output_after_10_cell = torch.stack((output_after_10_indices // 91, output_after_10_indices % 91), dim=1)
-            label_after_10_cell = torch.stack((label_after_10_indices // 91, label_after_10_indices % 91), dim=1)
-            output_after_30_cell = torch.stack((output_after_30_indices // 91, output_after_30_indices % 91), dim=1)
-            label_after_30_cell = torch.stack((label_after_30_indices // 91, label_after_30_indices % 91), dim=1)
-            output_after_50_cell = torch.stack((output_after_50_indices // 91, output_after_50_indices % 91), dim=1)
-            label_after_50_cell = torch.stack((label_after_50_indices // 91, label_after_50_indices % 91), dim=1)
+            output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size[1]), dim=1)
+            label_after_10_cell = torch.stack((label_after_10_indices // grid_size[0], label_after_10_indices % grid_size[1]), dim=1)
+            output_after_30_cell = torch.stack((output_after_30_indices // grid_size[0], output_after_30_indices % grid_size[1]), dim=1)
+            label_after_30_cell = torch.stack((label_after_30_indices // grid_size[0], label_after_30_indices % grid_size[1]), dim=1)
+            output_after_50_cell = torch.stack((output_after_50_indices // grid_size[0], output_after_50_indices % grid_size[1]), dim=1)
+            label_after_50_cell = torch.stack((label_after_50_indices // grid_size[0], label_after_50_indices % grid_size[1]), dim=1)
             
             euclidean_distance_loss_1 = torch.norm(output_after_10_cell.float() - label_after_10_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_2 = torch.norm(output_after_30_cell.float() - label_after_30_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
