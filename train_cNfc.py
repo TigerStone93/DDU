@@ -32,7 +32,7 @@ def training_args():
     loss = "cross_entropy"
     weight_decay = 5e-4
     log_interval = 50
-    save_interval = 25
+    save_interval = 10
     save_loc = "./"
     saved_model_name = "resnet18_350.model"
     epoch = 5000
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         
         # Sampling the 100 indices from 0 to 4950
         num_index_samples = 100
-        num_vehicle_samples = 100 # Vehicles are spawned in random points for each iteration.
+        num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
         training_epoch_loss = 0
         for step in record_index_shuffled[:num_index_samples]:
             current_record = record[step]
@@ -175,14 +175,14 @@ if __name__ == "__main__":
             after_10_xy = record[step+10, :num_vehicle_samples, :2]        
             after_30_xy = record[step+30, :num_vehicle_samples, :2]
             after_50_xy = record[step+50, :num_vehicle_samples, :2]
-            # combined_record = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
-            combined_record = np.concatenate((current_xy, current_yaw, current_velocity_xy, after_10_xy, after_30_xy, after_50_xy), axis=1)
+            # combined_record_sampled = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
+            combined_record_sampled = np.concatenate((current_xy, current_yaw, current_velocity_xy, after_10_xy, after_30_xy, after_50_xy), axis=1)
 
             # Generating the grid labels by preprocessing
             grid_label_after_10_array = []
             grid_label_after_30_array = []
             grid_label_after_50_array = []
-            for cr in combined_record:
+            for cr in combined_record_sampled:
                 # current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
                 current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
@@ -304,7 +304,7 @@ if __name__ == "__main__":
             _, output_after_50_indices = torch.max(output_after_50_flattened, dim=1)
             _, label_after_50_indices = torch.max(label_after_50_flattened, dim=1)
             
-            output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size1]), dim=1)
+            output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size[1]), dim=1)
             label_after_10_cell = torch.stack((label_after_10_indices // grid_size[0], label_after_10_indices % grid_size[1]), dim=1)
             output_after_30_cell = torch.stack((output_after_30_indices // grid_size[0], output_after_30_indices % grid_size[1]), dim=1)
             label_after_30_cell = torch.stack((label_after_30_indices // grid_size[0], label_after_30_indices % grid_size[1]), dim=1)
@@ -322,7 +322,7 @@ if __name__ == "__main__":
             # Updating the parameters
             optimizer.step()
 
-        training_epoch_loss /= num_samples # / 100
+        training_epoch_loss /= num_index_samples # / 100
         print("====> Epoch: {} loss: {:.4f}".format(epoch, training_epoch_loss))
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
         training_set_loss[epoch] = training_epoch_loss
