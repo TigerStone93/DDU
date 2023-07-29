@@ -161,6 +161,7 @@ if __name__ == "__main__":
         num_index_samples = 100
         num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
         training_epoch_loss = 0
+        counter_record_filtering = []
         for step in record_index_shuffled[:num_index_samples]:
             current_record = record[step]
             current_record_sampled = record[step][:num_vehicle_samples] # (number_of_vehicles, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter, yaw: -180~180deg, v: m/s
@@ -182,6 +183,7 @@ if __name__ == "__main__":
             grid_label_after_10_array = []
             grid_label_after_30_array = []
             grid_label_after_50_array = []
+            counter_record = 0
             for cr in combined_record_sampled:
                 # current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
                 current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
@@ -212,11 +214,17 @@ if __name__ == "__main__":
 
                 # print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
-                    raise ValueError(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    counter_record_filtering.append(counter_record)
+                    print(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    continue
                 if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
-                    raise ValueError(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    counter_record_filtering.append(counter_record)
+                    print(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    continue
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
-                    raise ValueError(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    counter_record_filtering.append(counter_record)
+                    print(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    continue
                 
                 # Saving the grid label by stacking as array
                 grid_label_after_10 = np.zeros(grid_size)
@@ -225,9 +233,11 @@ if __name__ == "__main__":
                 grid_label_after_10[grid_after_10_x, grid_after_10_y] = 1
                 grid_label_after_30[grid_after_30_x, grid_after_30_y] = 1
                 grid_label_after_50[grid_after_50_x, grid_after_50_y] = 1
-                grid_label_after_10_array.append(grid_label_after_10) # (num_vehicle_samples, grid_size[0], grid_size[1])                
-                grid_label_after_30_array.append(grid_label_after_30) # (num_vehicle_samples, grid_size[0], grid_size[1])                
+                grid_label_after_10_array.append(grid_label_after_10) # (num_vehicle_samples, grid_size[0], grid_size[1])
+                grid_label_after_30_array.append(grid_label_after_30) # (num_vehicle_samples, grid_size[0], grid_size[1])
                 grid_label_after_50_array.append(grid_label_after_50) # (num_vehicle_samples, grid_size[0], grid_size[1])
+                
+                counter_record += 1
                 
                 # Visualizing the grid label
                 """
@@ -243,8 +253,12 @@ if __name__ == "__main__":
                     ax.plot(grid_after_30_x, grid_after_30_y, 'go')
                     ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
                     plt.show()
-                """
+                """                
             # print("grid_label_after_10_array shape :", np.array(grid_label_after_10_array).shape) # (num_vehicle_samples, grid_size[0], grid_size[1])
+            
+            # Filtering the record data outside the grid
+            current_record_sampled_filtering_mask = np.isin(np.arange(current_record_sampled.shape[0]), counter_record_filtering)
+            current_record_sampled_filtered = current_record_sampled[~current_record_sampled_filtering_mask]
             
             # Generating the map inputs by preprocessing
             map_copied = map.copy()
@@ -253,7 +267,23 @@ if __name__ == "__main__":
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
             map_input_array = []
             map_cropping_size = 300
-            for cr in current_record_sampled:
+            counter_map = 0
+            for cr in current_record_sampled_filtered:
+                """
+                if counter_map in counter_record_filtering:
+                    counter_map += 1
+                    continue
+                """
+                """
+                filter_flag = False                
+                for counter in counter_record_filtered:
+                    if counter == counter_map:
+                        filter_flag = True
+                        counter_map += 1
+                        break
+                if filter_flag == True:
+                    continue
+                """
                 location = (cr[:2] + compensator) * 8.
                 M1 = np.float32( [ [1, 0, -location[0]], [0, 1, -location[1]], [0, 0, 1] ] )
                 M2 = cv2.getRotationMatrix2D((0, 0), cr[2] + 90, 1.0)
@@ -262,6 +292,8 @@ if __name__ == "__main__":
                 M = np.matmul(np.matmul(M3, M2), M1)
                 map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size)) # (width, height)
                 map_input_array.append(map_rotated_n_cropped.astype(np.float32) / 128.0 - 1.0) # (num_vehicle_samples, map_cropping_size, map_cropping_size, 3)
+                
+                # counter_map += 1
                 
                 # Visualizing the map
                 """
@@ -273,7 +305,8 @@ if __name__ == "__main__":
             # print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size height, map_cropping_size width, 3)
 
             map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples, 3, map_cropping_size height, map_cropping_size width)
-            record_input_tensor = torch.tensor(current_record_sampled, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+            # record_input_tensor = torch.tensor(current_record_sampled, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+            record_input_tensor = torch.tensor(current_record_sampled_filtered, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_30_tensor = torch.tensor(np.array(grid_label_after_30_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
