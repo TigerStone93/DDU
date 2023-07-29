@@ -304,7 +304,7 @@ if __name__ == "__main__":
                 """
             # print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size height, map_cropping_size width, 3)
 
-            map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples, 3, map_cropping_size height, map_cropping_size width)
+            map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples, map_cropping_size height, map_cropping_size width, 3 channels) → (num_vehicle_samples, 3 channels, map_cropping_size height, map_cropping_size width)
             # record_input_tensor = torch.tensor(current_record_sampled, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             record_input_tensor = torch.tensor(current_record_sampled_filtered, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
@@ -355,7 +355,7 @@ if __name__ == "__main__":
             # Updating the parameters
             optimizer.step()
 
-        training_epoch_loss /= num_index_samples # / 100
+        training_epoch_loss /= num_index_samples
         print("====> Epoch: {} loss: {:.4f}".format(epoch, training_epoch_loss))
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
         training_set_loss[epoch] = training_epoch_loss
