@@ -70,8 +70,6 @@ def training_args():
 
 # ========================================================================================== #
 
-dataset_num_outputs = {"cifar10": 10, "cifar100": 100, "svhn": 10, "dirty_mnist": 10}
-
 models = {
     "resnet18": resnet18,}
 
@@ -149,7 +147,7 @@ if __name__ == "__main__":
     # ============================== #
     
     for epoch in range(0, args.epoch):
-        print("Starting epoch", epoch)        
+        print("========== Epoch", epoch, "==========")
         timestamp_step_start = time.time()
         
         # Loading the matrix dataset for preprocessing
@@ -217,23 +215,38 @@ if __name__ == "__main__":
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
                     counter_record_filtering.append(counter_record)
                     counter_record += 1
-                    print(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")                    
-                    print(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
-                    print(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
+                    print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
+                    print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
+                    print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
+                    print(f"Raw location after 50 timestep: ({after_50_x:.4f}, {after_50_y:.4f})")
+                    print(f"Yaw current: {current_yaw:.4f}")
+                    print(f"Grid Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")                    
+                    print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
+                    print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
                     continue
                 if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
                     counter_record_filtering.append(counter_record)
                     counter_record += 1
-                    print(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y})")
-                    print(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
-                    print(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
+                    print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
+                    print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
+                    print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
+                    print(f"Raw location after 50 timestep: ({after_50_x:.4f}, {after_50_y:.4f})")
+                    print(f"Yaw current: {current_yaw:.4f}")
+                    print(f"Grid Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y})")
+                    print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
                     continue
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
                     counter_record_filtering.append(counter_record)
                     counter_record += 1
-                    print(f"Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y})")                    
-                    print(f"Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
-                    print(f"Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
+                    print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
+                    print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
+                    print(f"Raw location after 50 timestep: ({after_50_x:.4f}, {after_50_y:.4f})")
+                    print(f"Yaw current: {current_yaw:.4f}")
+                    print(f"Grid Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y})")                    
+                    print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
+                    print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
                     continue
                 
                 # Saving the grid label by stacking as array
@@ -361,15 +374,17 @@ if __name__ == "__main__":
             euclidean_distance_loss_2 = torch.norm(output_after_30_cell.float() - label_after_30_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_3 = torch.norm(output_after_50_cell.float() - label_after_50_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             
-            training_step_loss = 3/10*cross_entropy_loss_1 + 3/10*cross_entropy_loss_2 + 3/10*cross_entropy_loss_3 + 1/30*euclidean_distance_loss_1 + 1/30*euclidean_distance_loss_2 + 1/30*euclidean_distance_loss_3
+            # print(f"[Term] CE_1: {cross_entropy_loss_1:.4f},    CE_2: {cross_entropy_loss_2:.4f},    CE_3: {cross_entropy_loss_3:.4f},    ED_1: {euclidean_distance_loss_1:.4f},    ED_2 : {euclidean_distance_loss_2:.4f},    ED_3: {euclidean_distance_loss_3:.4f}")
+            training_step_loss = 1/6*cross_entropy_loss_1 + 1/6*cross_entropy_loss_2 + 1/6*cross_entropy_loss_3 + 1/6*euclidean_distance_loss_1 + 1/6*euclidean_distance_loss_2 + 1/6*euclidean_distance_loss_3
                         
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
             # Updating the parameters
             optimizer.step()
 
-        training_epoch_loss /= num_index_samples
-        print("====> Epoch: {} loss: {:.4f}".format(epoch, training_epoch_loss))
+        training_epoch_loss /= (num_index_samples - len(counter_record_filtering))
+        print(f"[Term] CE_1: {cross_entropy_loss_1:.4f},    CE_2: {cross_entropy_loss_2:.4f},    CE_3: {cross_entropy_loss_3:.4f},    ED_1: {euclidean_distance_loss_1:.4f},    ED_2 : {euclidean_distance_loss_2:.4f},    ED_3: {euclidean_distance_loss_3:.4f}    (Only show loss terms of last record)")
+        print(f"[Loss] {training_epoch_loss:.4f}")
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
         training_set_loss[epoch] = training_epoch_loss
 
@@ -382,12 +397,12 @@ if __name__ == "__main__":
             torch.save(net.state_dict(), saved_name)
             
         timestamp_step_end = time.time()
-        print(f"Time elapsing : {timestamp_step_end - timestamp_step_start:.2f} seconds")
+        print(f"[Time] {timestamp_step_end - timestamp_step_start:.1f} seconds\n")
 
     # Saving the model before completion
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
     torch.save(net.state_dict(), saved_name)
-    print("Model saved to ", saved_name)
+    print("[Save]", saved_name)
     
     with open(saved_name[: saved_name.rfind("_")] + "_training_set_loss.json", "a") as f:
         json.dump(training_set_loss, f)
