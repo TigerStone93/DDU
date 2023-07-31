@@ -13,6 +13,7 @@ from sklearn.metrics import confusion_matrix
 
 # ========================================================================================== #
 
+# For test_classification_net() and get_roc_auc()
 def get_logits_labels(model, data_loader, device):
     """
     Utility function to get logits and labels.
