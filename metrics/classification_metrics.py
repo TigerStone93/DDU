@@ -73,6 +73,7 @@ def test_classification_net(model, data_loader, device):
     return test_classification_net_logits(logits, labels)
 
 
+# For ensemble
 def test_classification_net_ensemble(model_ensemble, data_loader, device):
     """
     This function reports classification accuracy and confusion matrix over a dataset
