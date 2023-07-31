@@ -55,8 +55,6 @@ def test_classification_net_softmax(softmax_prob, labels):
         confidence_vals_list,
     )
 
-# ========================================================================================== #
-
 # For test_classification_net()
 def test_classification_net_logits(logits, labels):
     """
