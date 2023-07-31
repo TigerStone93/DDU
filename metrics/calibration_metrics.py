@@ -75,6 +75,7 @@ def expected_calibration_error(confs, preds, labels, num_bins=10):
         ece += (float(bin_count) / num_samples) * abs(bin_accuracy - bin_confidence)
     return ece
 
+# ========================================================================================== #
 
 # Calibration error scores in the form of loss metrics
 class ECELoss(nn.Module):
@@ -105,6 +106,7 @@ class ECELoss(nn.Module):
 
         return ece
 
+# ========================================================================================== #
 
 # Methods for plotting reliability diagrams and bin-strength plots
 def reliability_plot(confs, preds, labels, num_bins=15, model_name='model'):
