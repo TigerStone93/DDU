@@ -37,47 +37,43 @@ from utils.temperature_scaling import ModelWithTemperature
 
 # ========================================================================================== #
 
-# Dataset params
-dataset_num_classes = {"cifar10": 10, "cifar100": 100, "svhn": 10}
+models = {
+    "resnet18": resnet18,}
 
-dataset_loader = {"cifar10": cifar10, "cifar100": cifar100, "svhn": svhn}
-
-# Mapping model name to model function
-models = {"resnet50": resnet50, "wide_resnet": wrn, "vgg16": vgg16}
+grid_size = (127, 127) # 97: 0/48/96 0/32/64/96 or 91: 0/45/90 0/30/60/90 or 85: 0/42/84 0/28/56/84    45m / 2.5s = 18m/s = 64.8km/h = 40.2648mph    40mph = 64.3737km/h    35mph = 56.3270km/h = 15.6463m/s * 2.5s = 39.1159
 
 model_to_num_dim = {"resnet50": 2048, "wide_resnet": 640, "vgg16": 512}
 
 # ========================================================================================== #
 
 if __name__ == "__main__":
+    # Parsing the arguments
     args = eval_args().parse_args()
 
-    # Checking if GPU is available
-    cuda = torch.cuda.is_available()
-
-    # Setting additional parameters
+    # Setting the seed
     print("Parsed args", args)
     print("Seed: ", args.seed)
     torch.manual_seed(args.seed)
-    device = torch.device("cuda" if cuda else "cpu")
 
-    # Taking input for the dataset
-    num_classes = dataset_num_classes[args.dataset]
+    # Setting the device
+    cuda = torch.cuda.is_available() and args.gpu
+    device = torch.device("cuda" if cuda else "cpu")
+    print("CUDA set: " + str(cuda))
+
+    # Setting the num_outputs from dataset
+    num_outputs = grid_size
 
     test_loader = dataset_loader[args.dataset].get_test_loader(batch_size=args.batch_size, pin_memory=args.gpu)
-
     ood_test_loader = dataset_loader[args.ood_dataset].get_test_loader(batch_size=args.batch_size, pin_memory=args.gpu)
 
     # Evaluating the models
     accuracies = []
-
-    # For temperature scaled model
-    # m1 - Uncertainty/Confidence Metric 1
-    #      for deterministic model: logsumexp
-    #      for ensemble: entropy
-    # m2 - Uncertainty/Confidence Metric 2
-    #      for deterministic model: entropy
-    #      for ensemble: MI
+    
+    # m1 - Uncertainty/Confidence Metric 1 for deterministic model: logsumexp
+    #                                      for ensemble: entropy
+    # m2 - Uncertainty/Confidence Metric 2 for deterministic model: entropy
+    #                                      for ensemble: MI
+    # For model
     eces = []
     m1_aurocs = []
     m1_auprcs = []
@@ -91,10 +87,10 @@ if __name__ == "__main__":
     t_m2_aurocs = []
     t_m2_auprcs = []
 
-    topt = None
+    # topt = None # DEPRECATED
 
     for i in range(args.runs):
-        print(f"Evaluating run: {(i+1)}")
+        print(f"========== Run {i+1} ==========")
         
         # Loading the model
         train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
@@ -119,7 +115,7 @@ if __name__ == "__main__":
         # Temperature scaling the trained model (Calibrating the classifier to adjust the confidence of prediction)
         temp_scaled_net = ModelWithTemperature(net)
         temp_scaled_net.set_temperature(val_loader)
-        topt = temp_scaled_net.temperature
+        # topt = temp_scaled_net.temperature # DEPRECATED
 
         (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
         # ece(expected calibration error) represents quality of aleatoric uncertainty.
