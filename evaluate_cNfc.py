@@ -44,16 +44,9 @@ def evaluation_args():
 
     parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
     parser.set_defaults(gpu=True)
-    parser.add_argument("-b", type=int, default=batch_size, dest="batch_size", help="Batch size")
     parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
     parser.add_argument("--runs", type=int, default=runs, dest="runs", help="Number of models to aggregate over",)
 
-    parser.add_argument("-sn", action="store_true", dest="sn", help="whether to use spectral normalisation during training",)
-    parser.set_defaults(sn=False)
-    parser.add_argument("--coeff", type=float, default=sn_coeff, dest="coeff", help="Coeff parameter for spectral normalisation",)
-    parser.add_argument("-mod", action="store_true", dest="mod", help="whether to use architectural modifications during training",)
-    parser.set_defaults(mod=False)
-    parser.add_argument("--ensemble", type=int, default=ensemble, dest="ensemble", help="Number of models in ensemble")
     parser.add_argument("--model-type", type=str, default=model_type, choices=["softmax", "ensemble", "gmm"], dest="model_type", help="Type of model to load for evaluation.",)
 
     return parser
@@ -134,8 +127,8 @@ if __name__ == "__main__":
         # ============================== #
 
         # Evaluating the model
-        (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
         # ece(expected calibration error) represents quality of aleatoric uncertainty. ece measures expectation of difference between accuracy and confidence
+        (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
         ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
         # Temperature scaling the trained model (Calibrating the classifier to adjust the confidence of prediction)
@@ -144,7 +137,6 @@ if __name__ == "__main__":
         # topt = temp_scaled_net.temperature # DEPRECATED
 
         (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
-        # ece(expected calibration error) represents quality of aleatoric uncertainty.
         t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
 
         # ============================== #
