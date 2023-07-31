@@ -9,15 +9,8 @@ import torch
 import argparse
 import torch.backends.cudnn as cudnn
 
-# Import dataloaders
-import data.ood_detection.cifar10 as cifar10
-import data.ood_detection.cifar100 as cifar100
-import data.ood_detection.svhn as svhn
-
-# Import network models
-from net.resnet import resnet50
-from net.wide_resnet import wrn
-from net.vgg import vgg16
+# Importing the network models
+from resnet_cNfc import resnet18
 
 # Import metrics to compute
 from metrics.classification_metrics import test_classification_net, test_classification_net_logits, test_classification_net_ensemble
@@ -37,6 +30,36 @@ from utils.temperature_scaling import ModelWithTemperature
 
 # ========================================================================================== #
 
+def evaluation_args():
+    model = "resnet18"
+    sn_coeff = 3.0
+    runs = 5
+    ensemble = 5
+    model_type = "softmax"
+
+    parser = argparse.ArgumentParser(description="Training for calibration.", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
+    parser.add_argument("--seed", type=int, dest="seed", required=True, help="Seed to use")
+    parser.add_argument("--data-aug", action="store_true", dest="data_aug")
+    parser.set_defaults(data_aug=False)
+
+    parser.add_argument("--no-gpu", action="store_false", dest="gpu", help="Use GPU")
+    parser.set_defaults(gpu=True)
+    parser.add_argument("-b", type=int, default=batch_size, dest="batch_size", help="Batch size")
+    parser.add_argument("--model", type=str, default=model, dest="model", help="Model to train")
+    parser.add_argument("--runs", type=int, default=runs, dest="runs", help="Number of models to aggregate over",)
+
+    parser.add_argument("-sn", action="store_true", dest="sn", help="whether to use spectral normalisation during training",)
+    parser.set_defaults(sn=False)
+    parser.add_argument("--coeff", type=float, default=sn_coeff, dest="coeff", help="Coeff parameter for spectral normalisation",)
+    parser.add_argument("-mod", action="store_true", dest="mod", help="whether to use architectural modifications during training",)
+    parser.set_defaults(mod=False)
+    parser.add_argument("--ensemble", type=int, default=ensemble, dest="ensemble", help="Number of models in ensemble")
+    parser.add_argument("--model-type", type=str, default=model_type, choices=["softmax", "ensemble", "gmm"], dest="model_type", help="Type of model to load for evaluation.",)
+
+    return parser
+
+# ========================================================================================== #
+
 models = {
     "resnet18": resnet18,}
 
@@ -48,7 +71,7 @@ model_to_num_dim = {"resnet50": 2048, "wide_resnet": 640, "vgg16": 512}
 
 if __name__ == "__main__":
     # Parsing the arguments
-    args = eval_args().parse_args()
+    args = evaluation_args().parse_args()
 
     # Setting the seed
     print("Parsed args", args)
@@ -92,17 +115,20 @@ if __name__ == "__main__":
     for i in range(args.runs):
         print(f"========== Run {i+1} ==========")
         
-        # Loading the model
+        # Loading the model to evaluate
         train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
-        saved_model_name = os.path.join(args.load_loc, "Run" + str(i + 1), model_load_name(args.model, args.sn, args.mod, args.coeff, args.seed, i) + "_350.model",)
-        net = models[args.model](spectral_normalization=args.sn, mod=args.mod, coeff=args.coeff, num_classes=num_classes, temp=1.0,)
+        num_outputs = grid_size
+        net = models[args.model](
+            num_outputs=num_outputs,
+            temp=1.0,)
         
+        # Using the gpu
         if args.gpu:
             net.cuda()
             net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
             cudnn.benchmark = True
             
-        net.load_state_dict(torch.load(str(saved_model_name)))
+        net.load_state_dict(torch.load("resnet182_100.model"))
         net.eval()
 
         # ============================== #
