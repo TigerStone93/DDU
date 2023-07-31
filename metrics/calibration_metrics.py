@@ -39,7 +39,7 @@ def _bin_initializer(num_bins=10):
 
     return bin_dict
 
-# For expected_calibration_error()
+# For expected_calibration_error() and reliability_plot()
 def _populate_bins(confs, preds, labels, num_bins=10):
 
     bin_dict = _bin_initializer(num_bins)
