@@ -30,7 +30,7 @@ def confidence(logits):
 
 # ========================================================================================== #
 
-# For ensemble
+# For mutual_information_prob()
 def entropy_prob(probs):
     p = probs
     eps = 1e-12
