@@ -35,8 +35,7 @@ def get_logits_labels(model, data_loader, device):
 
 def test_classification_net_softmax(softmax_prob, labels):
     """
-    This function reports classification accuracy and confusion matrix given softmax vectors and
-    labels from a model.
+    This function reports classification accuracy and confusion matrix given softmax vectors and labels from a model.
     """
     labels_list = []
     predictions_list = []
@@ -60,12 +59,10 @@ def test_classification_net_softmax(softmax_prob, labels):
 # For GMM and softmax
 def test_classification_net_logits(logits, labels):
     """
-    This function reports classification accuracy and confusion matrix given logits and labels
-    from a model.
+    This function reports classification accuracy and confusion matrix given logits and labels from a model.
     """
     softmax_prob = F.softmax(logits, dim=1)
     return test_classification_net_softmax(softmax_prob, labels)
-
 
 # For GMM and softmax
 def test_classification_net(model, data_loader, device):
@@ -80,8 +77,7 @@ def test_classification_net(model, data_loader, device):
 # For ensemble
 def test_classification_net_ensemble(model_ensemble, data_loader, device):
     """
-    This function reports classification accuracy and confusion matrix over a dataset
-    for a deep ensemble.
+    This function reports classification accuracy and confusion matrix over a dataset for a deep ensemble.
     """
     for model in model_ensemble:
         model.eval()
