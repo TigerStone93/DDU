@@ -269,6 +269,21 @@ if __name__ == "__main__":
             grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
         
             output_after_10, output_after_30, output_after_50 = net(map_input_tensor, record_input_tensor)
+            
+            # output_after_10, output_after_30, output_after_50에서 x, y를 가져와 하나로 plot
+            for one in batch:
+                if output_after_10_x == output_after_30_x == output_after_50_x and output_after_10_y == output_after_30_y == output_after_50_y:
+                    continue
+                else:                
+                    checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
+                    custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
+                    fig, ax = plt.subplots(figsize=(10, 10))
+                    ax.imshow(checkerboard_background, cmap=custom_color_map, origin='lower')
+                    ax.plot(grid_size[0] // 2, grid_size[1] // 2, 'ro')
+                    ax.plot(output_after_10_x, output_after_10_y, 'yo')
+                    ax.plot(output_after_30_x, output_after_30_y, 'go')
+                    ax.plot(output_after_50_x, output_after_50_y, 'bo')                    
+                    plt.show()
         
         """
         # ============================== #
