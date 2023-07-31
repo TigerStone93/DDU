@@ -26,6 +26,7 @@ BIN_CONF = "bin_conf"
 
 # ========================================================================================== #
 
+# For _populate_bins()
 def _bin_initializer(num_bins=10):
     bin_dict = {}
     for i in range(num_bins):
@@ -38,7 +39,7 @@ def _bin_initializer(num_bins=10):
 
     return bin_dict
 
-
+# For expected_calibration_error()
 def _populate_bins(confs, preds, labels, num_bins=10):
 
     bin_dict = _bin_initializer(num_bins)
@@ -62,7 +63,7 @@ def _populate_bins(confs, preds, labels, num_bins=10):
             bin_dict[binn][BIN_CONF] = bin_dict[binn][CONF] / float(bin_dict[binn][COUNT])
     return bin_dict
 
-
+# For ...
 def expected_calibration_error(confs, preds, labels, num_bins=10):
     bin_dict = _populate_bins(confs, preds, labels, num_bins)
     num_samples = len(labels)
