@@ -32,7 +32,7 @@ def get_logits_labels(model, data_loader, device):
     labels = torch.cat(labels, dim=0)
     return logits, labels
 
-
+# For test_classification_net_logits()
 def test_classification_net_softmax(softmax_prob, labels):
     """
     This function reports classification accuracy and confusion matrix given softmax vectors and labels from a model.
