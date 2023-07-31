@@ -129,8 +129,8 @@ if __name__ == "__main__":
         random.shuffle(record_index_shuffled)
 
         # Sampling the 100 indices from 0 to 4950
-        num_index_samples = 100
-        num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
+        num_index_samples = 5
+        num_vehicle_samples = 5 # Vehicles are spawned in random points for each iteration.
         for step in record_index_shuffled[:num_index_samples]:
             current_record = record[step]
             current_record_sampled = record[step][:num_vehicle_samples] # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter    yaw: -180~180deg    v: m/s
@@ -215,7 +215,6 @@ if __name__ == "__main__":
                     print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
                     continue
 
-
                 # Saving the grid label by stacking as array
                 grid_label_after_10 = np.zeros(grid_size)
                 grid_label_after_30 = np.zeros(grid_size)
@@ -228,6 +227,20 @@ if __name__ == "__main__":
                 grid_label_after_50_array.append(grid_label_after_50) # (num_vehicle_samples, grid_size[0], grid_size[1])
         
                 counter_record += 1
+            
+                # Visualizing the grid label
+                if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
+                    continue
+                else:                
+                    checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
+                    custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
+                    fig, ax = plt.subplots(figsize=(10, 10))
+                    ax.imshow(checkerboard_background, cmap=custom_color_map, origin='lower')
+                    ax.plot(grid_size[0] // 2, grid_size[1] // 2, 'ro')
+                    ax.plot(grid_after_10_x, grid_after_10_y, 'yo')
+                    ax.plot(grid_after_30_x, grid_after_30_y, 'go')
+                    ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
+                    plt.show()
 
             # Filtering the record data outside the grid
             current_record_sampled_filtered = np.delete(current_record_sampled, counter_record_filtering, axis=0)
@@ -256,7 +269,7 @@ if __name__ == "__main__":
             grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
         
             output_after_10, output_after_30, output_after_50 = net(map_input_tensor, record_input_tensor)
-            
+        
         """
         # ============================== #
 
