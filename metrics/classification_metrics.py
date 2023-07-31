@@ -56,7 +56,7 @@ def test_classification_net_softmax(softmax_prob, labels):
 
 # ========================================================================================== #
 
-# For GMM and softmax
+# For test_classification_net()
 def test_classification_net_logits(logits, labels):
     """
     This function reports classification accuracy and confusion matrix given logits and labels from a model.
