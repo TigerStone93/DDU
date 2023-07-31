@@ -13,8 +13,9 @@ from torch.nn import functional as F
 
 import matplotlib.pyplot as plt
 
-plt.rcParams.update({"font.size": 20})
+# ========================================================================================== #
 
+plt.rcParams.update({"font.size": 20})
 
 # Some keys used for the following dictionaries
 COUNT = "count"
@@ -23,6 +24,7 @@ ACC = "acc"
 BIN_ACC = "bin_acc"
 BIN_CONF = "bin_conf"
 
+# ========================================================================================== #
 
 def _bin_initializer(num_bins=10):
     bin_dict = {}
