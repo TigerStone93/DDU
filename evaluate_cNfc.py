@@ -33,8 +33,7 @@ from utils.temperature_scaling import ModelWithTemperature
 def evaluation_args():
     model = "resnet18"
     sn_coeff = 3.0
-    runs = 5
-    ensemble = 5
+    runs = 1
     model_type = "softmax"
 
     parser = argparse.ArgumentParser(description="Training for calibration.", formatter_class=argparse.ArgumentDefaultsHelpFormatter,)
@@ -124,6 +123,141 @@ if __name__ == "__main__":
         net.load_state_dict(torch.load("resnet182_100.model"))
         net.eval()
 
+        # Loading the matrix dataset for preprocessing
+        record = np.load("data/log_speed30/" + str(random.randrange(1000)) + ".npy") # (5000, number of vehicles spawned, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
+        record_index_shuffled = list(range(1, np.shape(record)[0] - 50))
+        random.shuffle(record_index_shuffled)
+
+        # Sampling the 100 indices from 0 to 4950
+        num_index_samples = 100
+        num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
+        for step in record_index_shuffled[:num_index_samples]:
+            current_record = record[step]
+            current_record_sampled = record[step][:num_vehicle_samples] # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter    yaw: -180~180deg    v: m/s
+
+            current_xy = current_record_sampled[:, :2]
+            current_yaw = np.reshape(current_record_sampled[:, 2], (num_vehicle_samples, 1)) # positive yaw: counterclockwise, negative yaw: clockwise
+            current_velocity_xy = current_record_sampled[:, 3:]
+            after_10_xy = record[step+10, :num_vehicle_samples, :2]        
+            after_30_xy = record[step+30, :num_vehicle_samples, :2]
+            after_50_xy = record[step+50, :num_vehicle_samples, :2]
+            combined_record_sampled = np.concatenate((current_xy, current_yaw, current_velocity_xy, after_10_xy, after_30_xy, after_50_xy), axis=1)
+
+            # Generating the grid labels by preprocessing
+            grid_label_after_10_array = []
+            grid_label_after_30_array = []
+            grid_label_after_50_array = []
+            counter_record = 0            
+            counter_record_filtering = []
+            for cr in combined_record_sampled:
+                current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
+
+                velocity = math.sqrt(current_velocity_x**2 + current_velocity_y**2) * 3.6
+                
+                # Rotating the heading of vehicle to align with center-top cell of grid
+                dx_10 = after_10_x - current_x
+                dy_10 = after_10_y - current_y
+                dx_30 = after_30_x - current_x
+                dy_30 = after_30_y - current_y
+                dx_50 = after_50_x - current_x
+                dy_50 = after_50_y - current_y
+                current_yaw_radian = np.radians(current_yaw)
+                after_10_x_rotated = -dx_10 * np.sin(current_yaw_radian) + dy_10 * np.cos(current_yaw_radian)
+                after_10_y_rotated = dx_10 * np.cos(current_yaw_radian) + dy_10 * np.sin(current_yaw_radian)                
+                after_30_x_rotated = -dx_30 * np.sin(current_yaw_radian) + dy_30 * np.cos(current_yaw_radian)
+                after_30_y_rotated = dx_30 * np.cos(current_yaw_radian) + dy_30 * np.sin(current_yaw_radian)                
+                after_50_x_rotated = -dx_50 * np.sin(current_yaw_radian) + dy_50 * np.cos(current_yaw_radian)
+                after_50_y_rotated = dx_50 * np.cos(current_yaw_radian) + dy_50 * np.sin(current_yaw_radian)
+
+                grid_after_10_x = int(grid_size[0] // 2 + round(after_10_x_rotated))
+                grid_after_10_y = int(grid_size[1] // 2 + round(after_10_y_rotated))
+                grid_after_30_x = int(grid_size[0] // 2 + round(after_30_x_rotated))
+                grid_after_30_y = int(grid_size[1] // 2 + round(after_30_y_rotated))
+                grid_after_50_x = int(grid_size[0] // 2 + round(after_50_x_rotated))
+                grid_after_50_y = int(grid_size[1] // 2 + round(after_50_y_rotated))
+
+                # print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
+                # Filtering the label outside the grid
+                if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
+                    counter_record_filtering.append(counter_record)
+                    counter_record += 1
+                    print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
+                    print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
+                    print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
+                    print(f"Raw location after 50 timestep: ({after_50_x:.4f}, {after_50_y:.4f})")
+                    print(f"Yaw current: {current_yaw:.4f}")
+                    print(f"Grid Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")                    
+                    print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
+                    print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
+                    continue
+                if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
+                    counter_record_filtering.append(counter_record)
+                    counter_record += 1
+                    print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
+                    print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
+                    print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
+                    print(f"Raw location after 50 timestep: ({after_50_x:.4f}, {after_50_y:.4f})")
+                    print(f"Yaw current: {current_yaw:.4f}")
+                    print(f"Grid Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y})")
+                    print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
+                    continue
+                if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
+                    counter_record_filtering.append(counter_record)
+                    counter_record += 1
+                    print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
+                    print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
+                    print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
+                    print(f"Raw location after 50 timestep: ({after_50_x:.4f}, {after_50_y:.4f})")
+                    print(f"Yaw current: {current_yaw:.4f}")
+                    print(f"Grid Location after 10 timestep: ({grid_after_10_x}, {grid_after_10_y})")                    
+                    print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
+                    print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
+                    continue
+
+
+                # Saving the grid label by stacking as array
+                grid_label_after_10 = np.zeros(grid_size)
+                grid_label_after_30 = np.zeros(grid_size)
+                grid_label_after_50 = np.zeros(grid_size)
+                grid_label_after_10[grid_after_10_x, grid_after_10_y] = 1
+                grid_label_after_30[grid_after_30_x, grid_after_30_y] = 1
+                grid_label_after_50[grid_after_50_x, grid_after_50_y] = 1
+                grid_label_after_10_array.append(grid_label_after_10) # (num_vehicle_samples, grid_size[0], grid_size[1])
+                grid_label_after_30_array.append(grid_label_after_30) # (num_vehicle_samples, grid_size[0], grid_size[1])
+                grid_label_after_50_array.append(grid_label_after_50) # (num_vehicle_samples, grid_size[0], grid_size[1])
+        
+                counter_record += 1
+
+            # Filtering the record data outside the grid
+            current_record_sampled_filtered = np.delete(current_record_sampled, counter_record_filtering, axis=0)
+
+            # Generating the map inputs by preprocessing
+            map_copied = map.copy()
+            # Drawing the circles representing location of vehicles on map for all vehicles, including unsampled ones
+            for cr in current_record:
+                cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
+            map_input_array = []
+            map_cropping_size = 300
+            for cr in current_record_sampled_filtered:
+                location = (cr[:2] + compensator) * 8.
+                M1 = np.float32( [ [1, 0, -location[0]], [0, 1, -location[1]], [0, 0, 1] ] )
+                M2 = cv2.getRotationMatrix2D((0, 0), cr[2] + 90, 1.0)
+                M2 = np.append(M2, np.float32([[0, 0, 1]]), axis=0)
+                M3 = np.float32( [ [1, 0, map_cropping_size/2], [0, 1, map_cropping_size*3/4], [0, 0, 1] ] )
+                M = np.matmul(np.matmul(M3, M2), M1)
+                map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size)) # (width, height)
+                map_input_array.append(map_rotated_n_cropped.astype(np.float32) / 128.0 - 1.0) # (num_vehicle_samples, map_cropping_size, map_cropping_size, 3)
+
+            map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples, map_cropping_size height, map_cropping_size width, 3 channels) → (num_vehicle_samples, 3 channels, map_cropping_size height, map_cropping_size width)
+            record_input_tensor = torch.tensor(current_record_sampled_filtered, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+            grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
+            grid_label_after_30_tensor = torch.tensor(np.array(grid_label_after_30_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
+            grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
+        
+            output_after_10, output_after_30, output_after_50 = net(map_input_tensor, record_input_tensor)
+            
+        """
         # ============================== #
 
         # Evaluating the model
@@ -301,3 +435,5 @@ if __name__ == "__main__":
 
     with open("res_"+model_save_name(args.model, args.sn, args.mod, args.coeff, args.seed)+"_"+args.model_type+"_"+args.dataset+"_"+args.ood_dataset+".json", "w",) as f:
         json.dump(res_dict, f)
+
+        """
