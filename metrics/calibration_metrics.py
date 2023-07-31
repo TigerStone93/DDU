@@ -63,7 +63,7 @@ def _populate_bins(confs, preds, labels, num_bins=10):
             bin_dict[binn][BIN_CONF] = bin_dict[binn][CONF] / float(bin_dict[binn][COUNT])
     return bin_dict
 
-# For ...
+# For GMM, softmax and ensemble
 def expected_calibration_error(confs, preds, labels, num_bins=10):
     bin_dict = _populate_bins(confs, preds, labels, num_bins)
     num_samples = len(labels)
