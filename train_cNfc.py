@@ -155,6 +155,8 @@ if __name__ == "__main__":
         record_index_shuffled = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index_shuffled)
         
+        # ============================== #
+        
         # Sampling the 100 indices from 0 to 4950
         num_index_samples = 100
         num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
@@ -176,12 +178,15 @@ if __name__ == "__main__":
             # combined_record_sampled = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
             combined_record_sampled = np.concatenate((current_xy, current_yaw, current_velocity_xy, after_10_xy, after_30_xy, after_50_xy), axis=1)
 
+            # ============================== #
+
             # Generating the grid labels by preprocessing
             grid_label_after_10_array = []
             grid_label_after_30_array = []
             grid_label_after_50_array = []
-            counter_record = 0            
-            counter_record_filtering = []
+            counter_exclude = 0
+            counter_include = 0
+            counter_exclude_array = []
             for cr in combined_record_sampled:
                 # current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
                 current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
@@ -209,12 +214,27 @@ if __name__ == "__main__":
                 grid_after_30_y = int(grid_size[1] // 2 + round(after_30_y_rotated))
                 grid_after_50_x = int(grid_size[0] // 2 + round(after_50_x_rotated))
                 grid_after_50_y = int(grid_size[1] // 2 + round(after_50_y_rotated))
-
+                                
                 # print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
+                
+                # ============================== #
+                
+                # Filtering some data of stationary vehicles
+                if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
+                    if counter_include % 4 == 0:
+                        counter_include += 1
+                    else:
+                        counter_exclude_array.append(counter_exclude)
+                        counter_exclude += 1
+                        counter_include += 1
+                        continue
+                    
+                # ============================== #
+
                 # Filtering the label outside the grid
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
-                    counter_record_filtering.append(counter_record)
-                    counter_record += 1
+                    counter_exclude_array.append(counter_exclude)
+                    counter_exclude += 1
                     print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
                     print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
                     print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
@@ -225,8 +245,8 @@ if __name__ == "__main__":
                     print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
                     continue
                 if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
-                    counter_record_filtering.append(counter_record)
-                    counter_record += 1
+                    counter_exclude_array.append(counter_exclude)
+                    counter_exclude += 1
                     print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
                     print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
                     print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
@@ -237,8 +257,8 @@ if __name__ == "__main__":
                     print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
                     continue
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
-                    counter_record_filtering.append(counter_record)
-                    counter_record += 1
+                    counter_exclude_array.append(counter_exclude)
+                    counter_exclude += 1
                     print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
                     print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
                     print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
@@ -248,6 +268,8 @@ if __name__ == "__main__":
                     print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
                     print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
                     continue
+                
+                # ============================== #
                 
                 # Saving the grid label by stacking as array
                 grid_label_after_10 = np.zeros(grid_size)
@@ -259,8 +281,8 @@ if __name__ == "__main__":
                 grid_label_after_10_array.append(grid_label_after_10) # (num_vehicle_samples, grid_size[0], grid_size[1])
                 grid_label_after_30_array.append(grid_label_after_30) # (num_vehicle_samples, grid_size[0], grid_size[1])
                 grid_label_after_50_array.append(grid_label_after_50) # (num_vehicle_samples, grid_size[0], grid_size[1])
-                
-                counter_record += 1
+                                
+                # ============================== #
                 
                 # Visualizing the grid label
                 """
@@ -276,13 +298,24 @@ if __name__ == "__main__":
                     ax.plot(grid_after_30_x, grid_after_30_y, 'go')
                     ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
                     plt.show()
-                """                
+                """ 
+                
+                # ============================== #
+                
+                # Increasing the number of counter
+                counter_exclude += 1
+                
+            # ============================== #
+            
             # print("grid_label_after_10_array shape :", np.array(grid_label_after_10_array).shape) # (num_vehicle_samples, grid_size[0], grid_size[1])
+            # print(counter_exclude_array)
+            
+            # ============================== #
             
             # Filtering the record data outside the grid
-            current_record_sampled_filtered = np.delete(current_record_sampled, counter_record_filtering, axis=0)
+            current_record_sampled_filtered = np.delete(current_record_sampled, counter_exclude_array, axis=0)
             """
-            current_record_sampled_filtering_mask = np.isin(np.arange(current_record_sampled.shape[0]), counter_record_filtering)
+            current_record_sampled_filtering_mask = np.isin(np.arange(current_record_sampled.shape[0]), counter_exclude_array)
             current_record_sampled_filtered = current_record_sampled[~current_record_sampled_filtering_mask]
             """
             
@@ -296,13 +329,13 @@ if __name__ == "__main__":
             # counter_map = 0
             for cr in current_record_sampled_filtered:
                 """
-                if counter_map in counter_record_filtering:
+                if counter_map in counter_exclude_array:
                     counter_map += 1
                     continue
                 """
                 """
                 filter_flag = False                
-                for counter in counter_record_filtered:
+                for counter in counter_exclude_filtered:
                     if counter == counter_map:
                         filter_flag = True
                         counter_map += 1
@@ -374,19 +407,22 @@ if __name__ == "__main__":
             euclidean_distance_loss_2 = torch.norm(output_after_30_cell.float() - label_after_30_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_3 = torch.norm(output_after_50_cell.float() - label_after_50_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             
-            # print(f"[Term] CE_1: {cross_entropy_loss_1:.4f},    CE_2: {cross_entropy_loss_2:.4f},    CE_3: {cross_entropy_loss_3:.4f},    ED_1: {euclidean_distance_loss_1:.4f},    ED_2 : {euclidean_distance_loss_2:.4f},    ED_3: {euclidean_distance_loss_3:.4f}")
             training_step_loss = 1/6*cross_entropy_loss_1 + 1/6*cross_entropy_loss_2 + 1/6*cross_entropy_loss_3 + 1/6*euclidean_distance_loss_1 + 1/6*euclidean_distance_loss_2 + 1/6*euclidean_distance_loss_3
+            # training_step_loss = 0.0667*cross_entropy_loss_1 + 0.0667*cross_entropy_loss_2 + 0.0667*cross_entropy_loss_3 + 0.2667*euclidean_distance_loss_1 + 0.2667*euclidean_distance_loss_2 + 0.2667*euclidean_distance_loss_3
                         
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
+            
             # Updating the parameters
             optimizer.step()
 
-        training_epoch_loss /= (num_index_samples - len(counter_record_filtering))
+        training_epoch_loss /= num_index_samples
         print(f"[Term] CE_1: {cross_entropy_loss_1:.4f},    CE_2: {cross_entropy_loss_2:.4f},    CE_3: {cross_entropy_loss_3:.4f},    ED_1: {euclidean_distance_loss_1:.4f},    ED_2 : {euclidean_distance_loss_2:.4f},    ED_3: {euclidean_distance_loss_3:.4f}    (Only show loss terms of last record)")
         print(f"[Loss] {training_epoch_loss:.4f}")
         writer.add_scalar(save_name + "_training_epoch_loss", training_epoch_loss, (epoch + 1))
         training_set_loss[epoch] = training_epoch_loss
+        
+        print(f"[Learning Rate] {optimizer.param_groups[0]['lr']}")
 
         # Decaying the learning_rate according to milestones
         scheduler.step()
