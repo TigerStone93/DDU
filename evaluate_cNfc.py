@@ -19,19 +19,19 @@ import matplotlib.colors as mcolors
 from resnet_cNfc import resnet18
 
 # Import metrics to compute
-# from metrics.classification_metrics import test_classification_net, test_classification_net_logits, test_classification_net_ensemble
-# from metrics.calibration_metrics import expected_calibration_error
-# from metrics.uncertainty_confidence import entropy, logsumexp
-# from metrics.ood_metrics import get_roc_auc, get_roc_auc_logits, get_roc_auc_ensemble
+from metrics.classification_metrics import test_classification_net, test_classification_net_logits, test_classification_net_ensemble
+from metrics.calibration_metrics import expected_calibration_error
+from metrics.uncertainty_confidence import entropy, logsumexp
+from metrics.ood_metrics import get_roc_auc, get_roc_auc_logits, get_roc_auc_ensemble
 
 # Import GMM utils
-# from utils.gmm_utils import get_embeddings, gmm_evaluate, gmm_fit
-# from utils.ensemble_utils import load_ensemble, ensemble_forward_pass
-# from utils.eval_utils import model_load_name
-# from utils.train_utils import model_save_name
+from utils.gmm_utils import get_embeddings, gmm_evaluate, gmm_fit
+from utils.ensemble_utils import load_ensemble, ensemble_forward_pass
+from utils.eval_utils import model_load_name
+from utils.train_utils import model_save_name
 
 # Temperature scaling
-# from utils.temperature_scaling import ModelWithTemperature
+from utils.temperature_scaling import ModelWithTemperature
 
 # ========================================================================================== #
 
