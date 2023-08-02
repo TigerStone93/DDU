@@ -78,9 +78,13 @@ def test_classification_net(model, data_loader, device):
     logits = torch.cat(logits, dim=0)
     labels = torch.cat(labels, dim=0)
 
+    # ============================== #
+    
     # Getting the softmax vectors given logits from model
     softmax_prob = F.softmax(logits, dim=1)
 
+    # ============================== #
+    
     # Getting the classification accuracy and confusion matrix given softmax vectors and labels from model
     labels_list = []
     predictions_list = []
@@ -101,13 +105,46 @@ def test_classification_net(model, data_loader, device):
 
 # For GMM, softmax and ensemble
 def expected_calibration_error(confs, preds, labels, num_bins=10):
-    bin_dict = _populate_bins(confs, preds, labels, num_bins)
+    # Initializing the bins
+    bin_dict = {}
+    for i in range(num_bins):
+        bin_dict[i] = {}
+        bin_dict[i]["count"] = 0
+        bin_dict[i]["conf"] = 0
+        bin_dict[i]["acc"] = 0
+        bin_dict[i]["bin_acc"] = 0
+        bin_dict[i]["bin_conf"] = 0
+
+    # ============================== #
+    
+    # Populating the bins
+    num_test_samples = len(confs)
+
+    for i in range(0, num_test_samples):
+        confidence = confs[i]
+        prediction = preds[i]
+        label = labels[i]
+        binn = int(math.ceil(((num_bins * confidence) - 1)))
+        bin_dict[binn]["count"] = bin_dict[binn]["count"] + 1
+        bin_dict[binn]["conf"] = bin_dict[binn]["conf"] + confidence
+        bin_dict[binn]["acc"] = bin_dict[binn]["acc"] + (1 if (label == prediction) else 0)
+
+    for binn in range(0, num_bins):
+        if bin_dict[binn]["count"] == 0:
+            bin_dict[binn]["bin_acc"] = 0
+            bin_dict[binn]["bin_conf"] = 0
+        else:
+            bin_dict[binn]["bin_acc"] = float(bin_dict[binn]["acc"]) / bin_dict[binn]["count"]
+            bin_dict[binn]["bin_conf"] = bin_dict[binn]["conf"] / float(bin_dict[binn]["count"])
+
+    # ============================== #
+    
     num_samples = len(labels)
     ece = 0
     for i in range(num_bins):
-        bin_accuracy = bin_dict[i][BIN_ACC]
-        bin_confidence = bin_dict[i][BIN_CONF]
-        bin_count = bin_dict[i][COUNT]
+        bin_accuracy = bin_dict[i]["bin_acc"]
+        bin_confidence = bin_dict[i]["bin_conf"]
+        bin_count = bin_dict[i]["count"]
         ece += (float(bin_count) / num_samples) * abs(bin_accuracy - bin_confidence)
     return ece
 
