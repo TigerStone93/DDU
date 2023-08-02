@@ -58,6 +58,7 @@ def evaluation_args():
 
 # ========================================================================================== #
 
+# For GMM and softmax
 def test_classification_net(model, data_loader, device):
     """
     This function reports classification accuracy and confusion matrix over a dataset.
@@ -95,6 +96,20 @@ def test_classification_net(model, data_loader, device):
             labels_list,
             predictions_list,
             confidence_vals_list,)
+    
+# ========================================================================================== #
+
+# For GMM, softmax and ensemble
+def expected_calibration_error(confs, preds, labels, num_bins=10):
+    bin_dict = _populate_bins(confs, preds, labels, num_bins)
+    num_samples = len(labels)
+    ece = 0
+    for i in range(num_bins):
+        bin_accuracy = bin_dict[i][BIN_ACC]
+        bin_confidence = bin_dict[i][BIN_CONF]
+        bin_count = bin_dict[i][COUNT]
+        ece += (float(bin_count) / num_samples) * abs(bin_accuracy - bin_confidence)
+    return ece
 
 # ========================================================================================== #
 
