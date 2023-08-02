@@ -57,6 +57,35 @@ def evaluation_args():
 
 # ========================================================================================== #
 
+def test_classification_net(model, data_loader, device):
+    """
+    This function reports classification accuracy and confusion matrix over a dataset.
+    """
+    # Getting the logits and labels
+    model.eval()
+    logits = []
+    labels = []
+    with torch.no_grad():
+        for data, label in data_loader:
+            data = data.to(device)
+            label = label.to(device)
+
+            logit = model(data)
+            logits.append(logit)
+            labels.append(label)
+    logits = torch.cat(logits, dim=0)
+    labels = torch.cat(labels, dim=0)
+
+    # Getting the classification accuracy and confusion matrix given logits and labels from model
+    softmax_prob = F.softmax(logits, dim=1)
+    return test_classification_net_softmax(softmax_prob, labels) # softmax_prob are logits
+    
+    
+    logits, labels = get_logits_labels(model, data_loader, device)
+    return test_classification_net_logits(logits, labels)
+
+# ========================================================================================== #
+
 models = {
     "resnet18": resnet18,}
 
