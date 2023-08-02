@@ -320,7 +320,6 @@ if __name__ == "__main__":
                 plt.savefig(f"Output {i}")
                 #plt.show()
         
-        """
         # ============================== #
 
         # Evaluating the model
@@ -498,5 +497,3 @@ if __name__ == "__main__":
 
     with open("res_"+model_save_name(args.model, args.sn, args.mod, args.coeff, args.seed)+"_"+args.model_type+"_"+args.dataset+"_"+args.ood_dataset+".json", "w",) as f:
         json.dump(res_dict, f)
-
-        """
