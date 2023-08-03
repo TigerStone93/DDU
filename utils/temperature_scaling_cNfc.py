@@ -36,7 +36,7 @@ class ModelWithTemperature(nn.Module):
         nll_criterion = nn.CrossEntropyLoss().cuda()
         ece_criterion = ECELoss().cuda()
 
-        # First: collect all the logits and labels for the validation set
+        # Collecting all the logits and labels for validation set
         logits_list = []
         labels_list = []
         with torch.no_grad():
@@ -48,6 +48,50 @@ class ModelWithTemperature(nn.Module):
             logits = torch.cat(logits_list).cuda()
             labels = torch.cat(labels_list).cuda()
 
+        # Setting the NLL and ECE criterion
+        nll_criterion = nn.CrossEntropyLoss().cuda()
+        ece_criterion = ECELoss().cuda()
+
+        # Calculating the NLL and ECE before temperature scaling
+        before_temperature_nll = nll_criterion(logits, labels).item()
+        before_temperature_ece = ece_criterion(logits, labels).item()
+        if self.log:
+            print("Before temperature scaling - NLL: %.3f, ECE: %.3f" % (before_temperature_nll, before_temperature_ece))
+
+        nll_val = 10 ** 7
+        ece_val = 10 ** 7
+        T_opt_nll = 1.0
+        T_opt_ece = 1.0
+        T = 0.1
+        for i in range(100):
+            self.temperature = T
+            self.cuda()
+            after_temperature_nll = nll_criterion(self.temperature_scale(logits), labels).item()
+            after_temperature_ece = ece_criterion(self.temperature_scale(logits), labels).item()
+            if nll_val > after_temperature_nll:
+                T_opt_nll = T
+                nll_val = after_temperature_nll
+
+            if ece_val > after_temperature_ece:
+                T_opt_ece = T
+                ece_val = after_temperature_ece
+            T += 0.1
+
+        if cross_validate == "ece":
+            self.temperature = T_opt_ece
+        else:
+            self.temperature = T_opt_nll
+        self.cuda()
+
+        # Calculate NLL and ECE after temperature scaling
+        after_temperature_nll = nll_criterion(self.temperature_scale(logits), labels).item()
+        after_temperature_ece = ece_criterion(self.temperature_scale(logits), labels).item()
+        if self.log:
+            print("Optimal temperature: %.3f" % self.temperature)
+            print("After temperature scaling - NLL: %.3f, ECE: %.3f" % (after_temperature_nll, after_temperature_ece))
+
+        return self
+        
         return self.set_temperature_logits(logits, labels, cross_validate=cross_validate)
 
     def set_temperature_logits(self, logits, labels, cross_validate="nll"):
