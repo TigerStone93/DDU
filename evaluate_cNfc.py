@@ -18,7 +18,6 @@ from resnet_cNfc import resnet18
 from sklearn.metrics import accuracy_score #
 from sklearn.metrics import confusion_matrix #
 from utils.temperature_scaling_cNfc import ModelWithTemperature
-from metrics.uncertainty_confidence import entropy, logsumexp
 
 import cv2
 import matplotlib.pyplot as plt
