@@ -21,13 +21,6 @@ from utils.temperature_scaling_cNfc import ModelWithTemperature
 from metrics.uncertainty_confidence import entropy, logsumexp
 from metrics.ood_metrics import get_roc_auc, get_roc_auc_logits, get_roc_auc_ensemble
 
-# Import GMM utils
-from utils.gmm_utils import get_embeddings, gmm_evaluate, gmm_fit
-from utils.ensemble_utils import load_ensemble, ensemble_forward_pass
-from utils.eval_utils import model_load_name
-from utils.train_utils import model_save_name
-
-
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -714,5 +707,5 @@ if __name__ == "__main__":
 
     res_dict["info"] = vars(args)
 
-    with open("res_"+model_save_name(args.model, args.sn, args.mod, args.coeff, args.seed)+"_"+args.model_type+"_"+args.dataset+"_"+args.ood_dataset+".json", "w",) as f:
+    with open("res_"+str(model_name)+str(seed)+"_"+args.model_type+".json", "w",) as f:
         json.dump(res_dict, f)
