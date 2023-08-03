@@ -334,8 +334,8 @@ if __name__ == "__main__":
     t_m2_aurocs = []
     t_m2_auprcs = []
 
-    # topt = None # DEPRECATED
-
+    # ============================== #
+    
     # Drawing the map image for training
     lanes = []
     with open("data/lane_town03.txt", "rt") as rf:
@@ -359,29 +359,40 @@ if __name__ == "__main__":
                 color = ( int(dx * 127 / r + 128), 128, int(dy * 127 / r + 128) )
                 cv2.line(map, ((lane[i] + compensator) * 8.).astype(np.int32), ((lane[i+1] + compensator) * 8.).astype(np.int32), color, 4)
 
+    # ============================== #
+    
     for i in range(args.runs):
         print(f"========== Run {i+1} ==========")
         
-        # Loading the model to evaluate
+        # Choosing the model to evaluate
         # train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
         num_outputs = grid_size
         net = models[args.model](
             num_outputs=num_outputs)
             # temp=1.0,)
+
+        # ============================== #
         
         # Using the gpu
         if args.gpu:
             net.cuda()
             net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
             cudnn.benchmark = True
-            
+
+        # ============================== #
+
+        # Loading the saved model to evaluate
         net.load_state_dict(torch.load("./save/resnet183_130.model"))
         net.eval()
 
+        # ============================== #
+        
         # Loading the matrix dataset for preprocessing
         record = np.load("data/log_speed30/" + str(random.randrange(1000)) + ".npy") # (5000, number of vehicles spawned, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index_shuffled = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index_shuffled)
+
+        # ============================== #
 
         # Sampling the 100 indices from 0 to 4950
         num_index_samples = 1
@@ -432,6 +443,9 @@ if __name__ == "__main__":
                 grid_after_50_y = int(grid_size[1] // 2 + round(after_50_y_rotated))
 
                 # print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
+
+                # ============================== #
+                
                 # Filtering the label outside the grid
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
                     counter_record_filtering.append(counter_record)
@@ -469,7 +483,9 @@ if __name__ == "__main__":
                     print(f"Grid Location after 30 timestep: ({grid_after_30_x}, {grid_after_30_y})")
                     print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y}) is outside the grid. Current velocity is {velocity:.2f}km/h")
                     continue
-
+                    
+                # ============================== #
+                
                 # Saving the grid label by stacking as array
                 grid_label_after_10 = np.zeros(grid_size)
                 grid_label_after_30 = np.zeros(grid_size)
@@ -557,7 +573,6 @@ if __name__ == "__main__":
         # Temperature scaling the trained model (Calibrating the classifier to adjust the confidence of prediction)
         temp_scaled_net = ModelWithTemperature(net)
         temp_scaled_net.set_temperature(val_loader)
-        # topt = temp_scaled_net.temperature # DEPRECATED
 
         (t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
         t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
