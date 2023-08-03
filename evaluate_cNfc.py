@@ -15,8 +15,7 @@ import torch.backends.cudnn as cudnn
 
 from resnet_cNfc import resnet18
 
-from sklearn.metrics import accuracy_score #
-from sklearn.metrics import confusion_matrix #
+from sklearn.metrics import accuracy_score
 from utils.temperature_scaling_cNfc import ModelWithTemperature
 
 import cv2
@@ -84,8 +83,7 @@ def test_classification_net(model, data_loader, device):
     predictions_list.extend(predictions.cpu().numpy())
     confidence_vals_list.extend(confidence_vals.cpu().numpy())
     accuracy = accuracy_score(labels_list, predictions_list)
-    return (confusion_matrix(labels_list, predictions_list),
-            accuracy,
+    return (accuracy,
             labels_list,
             predictions_list,
             confidence_vals_list,)
@@ -552,7 +550,7 @@ if __name__ == "__main__":
 
         # Evaluating the model
         # ece(expected calibration error) represents quality of aleatoric uncertainty. ece measures expectation of difference between accuracy and confidence
-        (conf_matrix, accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
+        (accuracy, labels_list, predictions, confidences,) = test_classification_net(net, test_loader, device)
         ece = expected_calibration_error(confidences, predictions, labels_list, num_bins=15)
 
         # Temperature scaling the trained model (Calibrating the classifier to adjust the confidence of prediction)
@@ -560,7 +558,7 @@ if __name__ == "__main__":
         temp_scaled_net.set_temperature(val_loader)
         # topt = temp_scaled_net.temperature # DEPRECATED
 
-        (t_conf_matrix, t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
+        (t_accuracy, t_labels_list, t_predictions, t_confidences,) = test_classification_net(temp_scaled_net, test_loader, device)
         t_ece = expected_calibration_error(t_confidences, t_predictions, t_labels_list, num_bins=15)
 
         # ============================== #
