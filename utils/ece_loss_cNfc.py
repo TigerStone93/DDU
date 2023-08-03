@@ -24,6 +24,8 @@ class ECELoss(nn.Module):
         self.bin_lowers = bin_boundaries[:-1]
         self.bin_uppers = bin_boundaries[1:]
 
+    # ============================================================ #
+    
     def forward(self, logits, labels):
         softmaxes = F.softmax(logits, dim=1)
         confidences, predictions = torch.max(softmaxes, 1)
