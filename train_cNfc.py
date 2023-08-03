@@ -13,11 +13,11 @@ from torch import optim
 import torch.backends.cudnn as cudnn
 from torch.nn import functional as F
 
+from resnet_cNfc import resnet18
+
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-
-from resnet_cNfc import resnet18
 
 from torch.utils.tensorboard import SummaryWriter
 
