@@ -33,7 +33,7 @@ def training_args():
     save_interval = 10
     save_loc = "./"
     saved_model_name = "resnet18_350.model"
-    epoch = 5000
+    epoch = 1000
     first_milestone = 150  # Milestone for change in lr
     second_milestone = 250  # Milestone for change in lr
 
@@ -147,6 +147,7 @@ if __name__ == "__main__":
     for epoch in range(0, args.epoch):
         print("========== Epoch", epoch, "==========")
         timestamp_step_start = time.time()
+        net.train()
         
         # Loading the matrix dataset for preprocessing
         record = np.load("data/log_speed30/" + str(random.randrange(1000)) + ".npy") # (5000, number of vehicles spawned, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
@@ -173,7 +174,6 @@ if __name__ == "__main__":
             after_10_xy = record[step+10, :num_vehicle_samples, :2]        
             after_30_xy = record[step+30, :num_vehicle_samples, :2]
             after_50_xy = record[step+50, :num_vehicle_samples, :2]
-            # combined_record_sampled = np.concatenate((current_xy, current_yaw, after_10_xy, after_30_xy, after_50_xy), axis=1)
             combined_record_sampled = np.concatenate((current_xy, current_yaw, current_velocity_xy, after_10_xy, after_30_xy, after_50_xy), axis=1)
 
             # ============================== #
@@ -186,7 +186,6 @@ if __name__ == "__main__":
             counter_include = 0
             counter_exclude_array = []
             for cr in combined_record_sampled:
-                # current_x, current_y, current_yaw, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
                 current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
                 velocity = math.sqrt(current_velocity_x**2 + current_velocity_y**2) * 3.6
@@ -217,7 +216,7 @@ if __name__ == "__main__":
                 
                 # ============================== #
                 
-                # Filtering some data of stationary vehicles
+                # Filtering out some data of stationary vehicles
                 if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
                     if counter_include % 4 == 0:
                         counter_include += 1
@@ -229,7 +228,7 @@ if __name__ == "__main__":
                     
                 # ============================== #
 
-                # Filtering the label outside the grid
+                # Filtering out the label outside the grid
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
                     counter_exclude_array.append(counter_exclude)
                     counter_exclude += 1
@@ -310,12 +309,10 @@ if __name__ == "__main__":
             
             # ============================== #
             
-            # Filtering the record data outside the grid
+            # Filtering out the record data repeated or outside the grid
             current_record_sampled_filtered = np.delete(current_record_sampled, counter_exclude_array, axis=0)
-            """
-            current_record_sampled_filtering_mask = np.isin(np.arange(current_record_sampled.shape[0]), counter_exclude_array)
-            current_record_sampled_filtered = current_record_sampled[~current_record_sampled_filtering_mask]
-            """
+
+            # ============================== #
             
             # Generating the map inputs by preprocessing
             map_copied = map.copy()
@@ -324,23 +321,7 @@ if __name__ == "__main__":
                 cv2.circle(map_copied, tuple(((cr[:2] + compensator) * 8.).astype(int)), 12, (128, 255, 128), -1)
             map_input_array = []
             map_cropping_size = 300
-            # counter_map = 0
             for cr in current_record_sampled_filtered:
-                """
-                if counter_map in counter_exclude_array:
-                    counter_map += 1
-                    continue
-                """
-                """
-                filter_flag = False                
-                for counter in counter_exclude_filtered:
-                    if counter == counter_map:
-                        filter_flag = True
-                        counter_map += 1
-                        break
-                if filter_flag == True:
-                    continue
-                """
                 location = (cr[:2] + compensator) * 8.
                 M1 = np.float32( [ [1, 0, -location[0]], [0, 1, -location[1]], [0, 0, 1] ] )
                 M2 = cv2.getRotationMatrix2D((0, 0), cr[2] + 90, 1.0)
@@ -349,8 +330,8 @@ if __name__ == "__main__":
                 M = np.matmul(np.matmul(M3, M2), M1)
                 map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size)) # (width, height)
                 map_input_array.append(map_rotated_n_cropped.astype(np.float32) / 128.0 - 1.0) # (num_vehicle_samples, map_cropping_size, map_cropping_size, 3)
-                
-                # counter_map += 1
+
+                # ============================== #
                 
                 # Visualizing the map
                 """
@@ -359,20 +340,27 @@ if __name__ == "__main__":
                 plt.axis('off')
                 plt.show()
                 """
+                
             # print("map_input_array shape :", np.array(map_input_array).shape) # (number_of_vehicles, map_cropping_size height, map_cropping_size width, 3)
 
+            # ============================== #
+            
+            # Converting the arrays to tensors for inputs of model
             map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples, map_cropping_size height, map_cropping_size width, 3 channels) → (num_vehicle_samples, 3 channels, map_cropping_size height, map_cropping_size width)
-            # record_input_tensor = torch.tensor(current_record_sampled, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             record_input_tensor = torch.tensor(current_record_sampled_filtered, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_30_tensor = torch.tensor(np.array(grid_label_after_30_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
-            
-            net.train()
+
+            # ============================== #
+
+            # Getting the output by putting input to model
             optimizer.zero_grad()
             output_after_10, output_after_30, output_after_50 = net(map_input_tensor, record_input_tensor)
 
-            # Flattening the output and label
+            # ============================== #
+            
+            # Flattening the output and label for loss calculations
             output_after_10_flattened = output_after_10.view(output_after_10.size(0), -1)
             output_after_30_flattened = output_after_30.view(output_after_30.size(0), -1)
             output_after_50_flattened = output_after_50.view(output_after_50.size(0), -1)
@@ -380,13 +368,17 @@ if __name__ == "__main__":
             label_after_30_flattened = grid_label_after_30_tensor.view(grid_label_after_30_tensor.size(0), -1)
             label_after_50_flattened = grid_label_after_50_tensor.view(grid_label_after_50_tensor.size(0), -1)
             
-            # Calculating the cross entropy loss by applying the softmax output 
+            # ============================== #
+            
+            # Calculating the cross entropy loss by applying the softmax output
             loss_function_dict = {"cross_entropy": F.cross_entropy}
             cross_entropy_loss_1 = loss_function_dict[args.loss_function](output_after_10_flattened, label_after_10_flattened) # 0 ~ inf
             cross_entropy_loss_2 = loss_function_dict[args.loss_function](output_after_30_flattened, label_after_30_flattened) # 0 ~ inf
             cross_entropy_loss_3 = loss_function_dict[args.loss_function](output_after_50_flattened, label_after_50_flattened) # 0 ~ inf
+            
+            # ============================== #
 
-            # Calculating the euclidean distance loss
+            # Getting the indices of output and label for loss calculations
             _, output_after_10_indices = torch.max(output_after_10_flattened, dim=1)
             _, label_after_10_indices = torch.max(label_after_10_flattened, dim=1)
             _, output_after_30_indices = torch.max(output_after_30_flattened, dim=1)
@@ -394,6 +386,9 @@ if __name__ == "__main__":
             _, output_after_50_indices = torch.max(output_after_50_flattened, dim=1)
             _, label_after_50_indices = torch.max(label_after_50_flattened, dim=1)
             
+            # ============================== #
+            
+            # Getting the cell coordinates of output and label for loss calculations
             output_after_10_cell = torch.stack((output_after_10_indices // grid_size[0], output_after_10_indices % grid_size[1]), dim=1)
             label_after_10_cell = torch.stack((label_after_10_indices // grid_size[0], label_after_10_indices % grid_size[1]), dim=1)
             output_after_30_cell = torch.stack((output_after_30_indices // grid_size[0], output_after_30_indices % grid_size[1]), dim=1)
@@ -401,19 +396,33 @@ if __name__ == "__main__":
             output_after_50_cell = torch.stack((output_after_50_indices // grid_size[0], output_after_50_indices % grid_size[1]), dim=1)
             label_after_50_cell = torch.stack((label_after_50_indices // grid_size[0], label_after_50_indices % grid_size[1]), dim=1)
             
+            # ============================== #
+            
+            # Calculating the euclidean distance loss
             euclidean_distance_loss_1 = torch.norm(output_after_10_cell.float() - label_after_10_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_2 = torch.norm(output_after_30_cell.float() - label_after_30_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             euclidean_distance_loss_3 = torch.norm(output_after_50_cell.float() - label_after_50_cell.float(), dim=1).mean() # 0 ~ 128.062 (sqrt(90^2 + 90^2))
             
+            # ============================== #
+
+            # Calculating the loss for step which using num_vehicle_samples as batch
             training_step_loss = 1/6*cross_entropy_loss_1 + 1/6*cross_entropy_loss_2 + 1/6*cross_entropy_loss_3 + 1/6*euclidean_distance_loss_1 + 1/6*euclidean_distance_loss_2 + 1/6*euclidean_distance_loss_3
             # training_step_loss = 0.0667*cross_entropy_loss_1 + 0.0667*cross_entropy_loss_2 + 0.0667*cross_entropy_loss_3 + 0.2667*euclidean_distance_loss_1 + 0.2667*euclidean_distance_loss_2 + 0.2667*euclidean_distance_loss_3
-                        
+            
+            # ============================== #
+
+            # Calculating the gradient by backpropagation
             training_step_loss.backward()
             training_epoch_loss += training_step_loss.item()
             
-            # Updating the parameters
+            # ============================== #
+            
+            # Updating the parameters by gradient descent
             optimizer.step()
 
+        # ============================== #
+
+        # Calculating the loss for epoch which using num_index_samples as batch
         training_epoch_loss /= num_index_samples
         print(f"[Term] CE_1: {cross_entropy_loss_1:.4f},    CE_2: {cross_entropy_loss_2:.4f},    CE_3: {cross_entropy_loss_3:.4f},    ED_1: {euclidean_distance_loss_1:.4f},    ED_2 : {euclidean_distance_loss_2:.4f},    ED_3: {euclidean_distance_loss_3:.4f}    (Only show loss terms of last record)")
         print(f"[Loss] {training_epoch_loss:.4f}")
@@ -422,8 +431,12 @@ if __name__ == "__main__":
         
         print(f"[Learning Rate] {optimizer.param_groups[0]['lr']}")
 
+        # ============================== #
+        
         # Decaying the learning_rate according to milestones
         scheduler.step()
+        
+        # ============================== #
         
         # Saving the model per save_interval
         if (epoch + 1) % args.save_interval == 0:
@@ -433,6 +446,8 @@ if __name__ == "__main__":
         timestamp_step_end = time.time()
         print(f"[Time] {timestamp_step_end - timestamp_step_start:.1f} seconds\n")
 
+    # ============================== #
+    
     # Saving the model before completion
     saved_name = args.save_loc + save_name + "_" + str(epoch + 1) + ".model"
     torch.save(net.state_dict(), saved_name)
