@@ -12,6 +12,7 @@ from torch import nn
 from torch.nn import functional as F
 import argparse
 import torch.backends.cudnn as cudnn
+from tqdm import tqdm
 
 from resnet_cNfc import resnet18
 
