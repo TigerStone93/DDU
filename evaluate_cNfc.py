@@ -8,20 +8,16 @@ import numpy as np
 import random
 import math
 import torch
+from torch import nn
+from torch.nn import functional as F
 import argparse
 import torch.backends.cudnn as cudnn
 
-import cv2
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-
-# Importing the network models
 from resnet_cNfc import resnet18
 
-# Import metrics to compute
 from sklearn.metrics import accuracy_score #
 from sklearn.metrics import confusion_matrix #
-from metrics.calibration_metrics import expected_calibration_error
+from utils.temperature_scaling_cNfc import ModelWithTemperature
 from metrics.uncertainty_confidence import entropy, logsumexp
 from metrics.ood_metrics import get_roc_auc, get_roc_auc_logits, get_roc_auc_ensemble
 
@@ -31,8 +27,10 @@ from utils.ensemble_utils import load_ensemble, ensemble_forward_pass
 from utils.eval_utils import model_load_name
 from utils.train_utils import model_save_name
 
-# Temperature scaling
-from utils.temperature_scaling_cNfc import ModelWithTemperature
+
+import cv2
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 # ========================================================================================== #
 
