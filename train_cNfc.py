@@ -17,10 +17,8 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
-# Import the network models
 from resnet_cNfc import resnet18
 
-# Tensorboard utilities
 from torch.utils.tensorboard import SummaryWriter
 
 # ========================================================================================== #
