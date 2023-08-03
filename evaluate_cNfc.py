@@ -32,7 +32,7 @@ from utils.eval_utils import model_load_name
 from utils.train_utils import model_save_name
 
 # Temperature scaling
-from utils.temperature_scaling import ModelWithTemperature
+from utils.temperature_scaling_cNfc import ModelWithTemperature
 
 # ========================================================================================== #
 
