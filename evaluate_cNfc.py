@@ -227,6 +227,23 @@ def gmm_evaluate(net, gaussians_model, loader, device, num_classes, storage_devi
             start = end
 
     return logits_N_C, labels_N
+    
+# ========================================================================================== #
+  
+# For GMM and softmax
+def entropy(logits):
+    p = F.softmax(logits, dim=1)
+    logp = F.log_softmax(logits, dim=1)
+    plogp = p * logp
+    entropy = -torch.sum(plogp, dim=1)
+    return entropy
+
+# ========================================================================================== #
+
+# For GMM and softmax
+# logsumexp() is sensitive to greater value because of exp(). It can show similar effect to using mean() after max().
+def logsumexp(logits):
+    return torch.logsumexp(logits, dim=1, keepdim=False)
 
 # ========================================================================================== #
 
