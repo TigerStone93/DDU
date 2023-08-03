@@ -6,19 +6,17 @@ import numpy as np
 from torch import nn, optim
 from torch.nn import functional as F
 
-from metrics.calibration_metrics import ECELoss
+from utils.ece_loss_cNfc import ECELoss
 
 # ========================================================================================== #
 
 class ModelWithTemperature(nn.Module):
     """
-    A thin decorator, which wraps a model with temperature scaling
-    model (nn.Module):
+    A thin decorator, which wraps a model with temperature scaling model (nn.Module):
         A classification neural network
         NB: Output of the neural network should be the classification logits,
             NOT the softmax (or log softmax)!
     """
-
     def __init__(self, model, log=True):
         super(ModelWithTemperature, self).__init__()
         self.model = model
