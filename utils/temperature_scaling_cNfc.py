@@ -25,19 +25,12 @@ class ModelWithTemperature(nn.Module):
 
     def forward(self, input):
         logits = self.model(input)
-        return self.temperature_scale(logits)
-
-    def temperature_scale(self, logits):
-        """
-        Perform temperature scaling on logits
-        """
-        # Expand temperature to match the size of logits
-        return logits / self.temperature
+        # Performing the temperature scaling on logits by expanding the temperature to match the size of logits
+        temperature_scaled_logits = logits / self.temperature
+        return temperature_scaled_logits
 
     def set_temperature(self, valid_loader, cross_validate="nll"):
-        """
-        Tune the tempearature of the model (using the validation set) with cross-validation on ECE or NLL
-        """
+        # Tuning the tempearature of model using the validation set with cross-validation on ECE or NLL
         self.cuda()
         self.model.eval()
         nll_criterion = nn.CrossEntropyLoss().cuda()
