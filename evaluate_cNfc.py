@@ -19,7 +19,6 @@ from sklearn.metrics import accuracy_score #
 from sklearn.metrics import confusion_matrix #
 from utils.temperature_scaling_cNfc import ModelWithTemperature
 from metrics.uncertainty_confidence import entropy, logsumexp
-from metrics.ood_metrics import get_roc_auc, get_roc_auc_logits, get_roc_auc_ensemble
 
 import cv2
 import matplotlib.pyplot as plt
