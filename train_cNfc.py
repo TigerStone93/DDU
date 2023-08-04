@@ -76,7 +76,9 @@ grid_size = (127, 127) # 97: 0/48/96 0/32/64/96 or 91: 0/45/90 0/30/60/90 or 85:
 if __name__ == "__main__":
     # Parsing the arguments
     args = training_args().parse_args()
-
+    
+    # ============================== #
+    
     # Setting the seed
     print("Parsed args", args)
     print("Seed: ", args.seed)
@@ -86,21 +88,26 @@ if __name__ == "__main__":
     cuda = torch.cuda.is_available() and args.gpu
     device = torch.device("cuda" if cuda else "cpu")
     print("CUDA set: " + str(cuda))
-
+    
+    # ============================== #
+    
     # Setting the num_outputs from dataset
-    # num_outputs = dataset_num_outputs[args.dataset]
     num_outputs = grid_size
 
     # Choosing the model to train
     net = models[args.model](
         num_outputs = num_outputs,)
 
+    # ============================== #
+    
     # Using the gpu
     if args.gpu:
         net.cuda()
         net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
         cudnn.benchmark = True
-
+    
+    # ============================== #
+    
     # Choosing the optimizer
     opt_params = net.parameters()
     if args.optimizer == "sgd":
@@ -108,7 +115,9 @@ if __name__ == "__main__":
     elif args.optimizer == "adam":
         optimizer = optim.Adam(opt_params, lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.first_milestone, args.second_milestone], gamma=0.1)
-
+    
+    # ============================== #
+    
     # Drawing the map image for training
     lanes = []
     with open("data/lane_town03.txt", "rt") as rf:
