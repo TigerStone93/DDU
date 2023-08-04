@@ -396,7 +396,7 @@ if __name__ == "__main__":
 
         # Sampling the 100 indices from 0 to 4950
         num_index_samples = 1
-        num_vehicle_samples = 10 # Vehicles are spawned in random points for each iteration.
+        num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
         for step in record_index_shuffled[:num_index_samples]:
             current_record = record[step]
             current_record_sampled = record[step][:num_vehicle_samples] # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter    yaw: -180~180deg    v: m/s
@@ -413,8 +413,9 @@ if __name__ == "__main__":
             grid_label_after_10_array = []
             grid_label_after_30_array = []
             grid_label_after_50_array = []
-            counter_record = 0            
-            counter_record_filtering = []
+            counter_exclude = 0
+            counter_include = 0
+            counter_exclude_array = []
             for cr in combined_record_sampled:
                 current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
@@ -443,13 +444,25 @@ if __name__ == "__main__":
                 grid_after_50_y = int(grid_size[1] // 2 + round(after_50_y_rotated))
 
                 # print(f"After 10: ({grid_after_10_x}, {grid_after_10_y})    After 30: ({grid_after_30_x}, {grid_after_30_y})    After 50: ({grid_after_50_x}, {grid_after_50_y})")
-
+                
+                # ============================== #
+                
+                # Filtering out some data of stationary vehicles
+                if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
+                    if counter_include % 4 == 0:
+                        counter_include += 1
+                    else:
+                        counter_exclude_array.append(counter_exclude)
+                        counter_exclude += 1
+                        counter_include += 1
+                        continue
+                        
                 # ============================== #
                 
                 # Filtering the label outside the grid
                 if not (0 <= grid_after_10_x < grid_size[0] and 0 <= grid_after_10_y < grid_size[1]):
-                    counter_record_filtering.append(counter_record)
-                    counter_record += 1
+                    counter_exclude_array.append(counter_exclude)
+                    counter_exclude += 1
                     print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
                     print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
                     print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
@@ -460,8 +473,8 @@ if __name__ == "__main__":
                     print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
                     continue
                 if not (0 <= grid_after_30_x < grid_size[0] and 0 <= grid_after_30_y < grid_size[1]):
-                    counter_record_filtering.append(counter_record)
-                    counter_record += 1
+                    counter_exclude_array.append(counter_exclude)
+                    counter_exclude += 1
                     print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
                     print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
                     print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
@@ -472,8 +485,8 @@ if __name__ == "__main__":
                     print(f"Grid Location after 50 timestep: ({grid_after_50_x}, {grid_after_50_y})")
                     continue
                 if not (0 <= grid_after_50_x < grid_size[0] and 0 <= grid_after_50_y < grid_size[1]):
-                    counter_record_filtering.append(counter_record)
-                    counter_record += 1
+                    counter_exclude_array.append(counter_exclude)
+                    counter_exclude += 1
                     print(f"Raw location current: ({current_x:.4f}, {current_y:.4f})")
                     print(f"Raw location after 10 timestep: ({after_10_x:.4f}, {after_10_y:.4f})")
                     print(f"Raw location after 30 timestep: ({after_30_x:.4f}, {after_30_y:.4f})")
@@ -508,10 +521,15 @@ if __name__ == "__main__":
                 ax.plot(grid_after_50_x, grid_after_50_y, 'bo')         
                 plt.title(f"Label {counter_record}")
                 plt.savefig(f"Label {counter_record}")
-                #plt.show()
+                # plt.show()
                 
-                counter_record += 1
+                # ============================== #
+                
+                # Increasing the number of counter
+                counter_exclude += 1
 
+            # ============================== #
+            
             # Filtering the record data outside the grid
             current_record_sampled_filtered = np.delete(current_record_sampled, counter_record_filtering, axis=0)
 
