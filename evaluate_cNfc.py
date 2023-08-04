@@ -510,6 +510,8 @@ if __name__ == "__main__":
                 grid_label_after_30_array.append(grid_label_after_30) # (num_vehicle_samples, grid_size[0], grid_size[1])
                 grid_label_after_50_array.append(grid_label_after_50) # (num_vehicle_samples, grid_size[0], grid_size[1])
             
+                # ============================== #
+                
                 # Visualizing the grid label
                 checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
                 custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
@@ -530,8 +532,13 @@ if __name__ == "__main__":
 
             # ============================== #
             
+            # print("grid_label_after_10_array shape :", np.array(grid_label_after_10_array).shape) # (num_vehicle_samples, grid_size[0], grid_size[1])
+            # print(counter_exclude_array)
+            
+            # ============================== #
+            
             # Filtering the record data outside the grid
-            current_record_sampled_filtered = np.delete(current_record_sampled, counter_record_filtering, axis=0)
+            current_record_sampled_filtered = np.delete(current_record_sampled, counter_exclude_array, axis=0)
 
             # Generating the map inputs by preprocessing
             map_copied = map.copy()
