@@ -412,6 +412,8 @@ if __name__ == "__main__":
             after_50_xy = record[step+50, :num_vehicle_samples, :2]
             combined_record_sampled = np.concatenate((current_xy, current_yaw, current_velocity_xy, after_10_xy, after_30_xy, after_50_xy), axis=1)
 
+            # ============================== #
+            
             # Generating the grid labels by preprocessing
             grid_label_after_10_array = []
             grid_label_after_30_array = []
