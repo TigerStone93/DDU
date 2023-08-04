@@ -156,7 +156,7 @@ if __name__ == "__main__":
         
         # Sampling the 100 indices from 0 to 4950
         num_index_samples = 100
-        num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
+        num_vehicle_samples = 100 # Vehicles are spawned in random points for each iteration.
         training_epoch_loss = 0
         for step in record_index_shuffled[:num_index_samples]:
             current_record = record[step]
