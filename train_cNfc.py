@@ -192,6 +192,7 @@ if __name__ == "__main__":
             counter_exclude = 0
             counter_include = 0
             counter_exclude_array = []
+            counter_visualize = 0
             for cr in combined_record_sampled:
                 current_x, current_y, current_yaw, current_velocity_x, current_velocity_y, after_10_x, after_10_y, after_30_x, after_30_y, after_50_x, after_50_y = cr
 
@@ -298,8 +299,8 @@ if __name__ == "__main__":
                 ax.plot(grid_after_10_x, grid_after_10_y, 'yo')
                 ax.plot(grid_after_30_x, grid_after_30_y, 'go')
                 ax.plot(grid_after_50_x, grid_after_50_y, 'bo')         
-                plt.title(f"Label {counter_record}")
-                # plt.savefig(f"Label {counter_record}")                    
+                plt.title(f"Label {counter_visualize}")
+                # plt.savefig(f"Label {counter_visualize}")                    
                 plt.show()
                 """ 
                 
@@ -307,6 +308,7 @@ if __name__ == "__main__":
                 
                 # Increasing the number of counter
                 counter_exclude += 1
+                counter_visualize += 1
                 
             # ============================== #
             
