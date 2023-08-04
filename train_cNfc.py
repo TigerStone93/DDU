@@ -32,7 +32,6 @@ def training_args():
     log_interval = 50
     save_interval = 10
     save_loc = "./"
-    saved_model_name = "resnet18_350.model"
     epoch = 1000
     first_milestone = 150  # Milestone for change in lr
     second_milestone = 250  # Milestone for change in lr
@@ -58,7 +57,6 @@ def training_args():
 
     parser.add_argument("--log-interval", type=int, default=log_interval, dest="log_interval", help="Log Interval on Terminal",)
     parser.add_argument("--save-interval", type=int, default=save_interval, dest="save_interval", help="Save Interval on Terminal",)
-    parser.add_argument("--saved_model_name", type=str, default=saved_model_name, dest="saved_model_name", help="file name of the pre-trained model",)
     parser.add_argument("--save-path", type=str, default=save_loc, dest="save_loc", help="Path to export the model",)
 
     parser.add_argument("--first-milestone", type=int, default=first_milestone, dest="first_milestone", help="First milestone to change lr",)
