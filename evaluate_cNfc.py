@@ -567,7 +567,7 @@ if __name__ == "__main__":
         
             output_after_10, output_after_30, output_after_50 = net(map_input_tensor, record_input_tensor)
             
-            for i in range(num_vehicle_samples):
+            for i in range(len(current_record_sampled_filtered)):
                 output_after_10_max_coordinates = torch.argmax(output_after_10[i].view(-1))
                 output_after_10_x = output_after_10_max_coordinates // 127
                 output_after_10_y = output_after_10_max_coordinates % 127
