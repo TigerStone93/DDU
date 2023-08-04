@@ -297,6 +297,8 @@ if __name__ == "__main__":
     # Parsing the arguments
     args = evaluation_args().parse_args()
 
+    # ============================== #
+    
     # Setting the seed
     print("Parsed args", args)
     print("Seed: ", args.seed)
@@ -307,9 +309,8 @@ if __name__ == "__main__":
     device = torch.device("cuda" if cuda else "cpu")
     print("CUDA set: " + str(cuda))
 
-    # Setting the num_outputs from dataset
-    num_outputs = grid_size
-
+    # ============================== #
+    
     # test_loader = dataset_loader[args.dataset].get_test_loader(batch_size=args.batch_size, pin_memory=args.gpu)
     # ood_test_loader = dataset_loader[args.ood_dataset].get_test_loader(batch_size=args.batch_size, pin_memory=args.gpu)
 
@@ -364,9 +365,11 @@ if __name__ == "__main__":
     for i in range(args.runs):
         print(f"========== Run {i+1} ==========")
         
+        # Setting the num_outputs from dataset
+        num_outputs = grid_size
+        
         # Choosing the model to evaluate
         # train_loader, val_loader = dataset_loader[args.dataset].get_train_valid_loader(batch_size=args.batch_size, augment=args.data_aug, val_seed=(args.seed+i), val_size=0.1, pin_memory=args.gpu,)
-        num_outputs = grid_size
         net = models[args.model](
             num_outputs=num_outputs)
             # temp=1.0,)
