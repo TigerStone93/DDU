@@ -282,19 +282,18 @@ if __name__ == "__main__":
                 # ============================== #
                 
                 # Visualizing the grid label
-                """
-                if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
-                    pass
-                else:                
-                    checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
-                    custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
-                    fig, ax = plt.subplots(figsize=(10, 10))
-                    ax.imshow(checkerboard_background, cmap=custom_color_map, origin='lower')
-                    ax.plot(grid_size[0] // 2, grid_size[1] // 2, 'ro')
-                    ax.plot(grid_after_10_x, grid_after_10_y, 'yo')
-                    ax.plot(grid_after_30_x, grid_after_30_y, 'go')
-                    ax.plot(grid_after_50_x, grid_after_50_y, 'bo')                    
-                    plt.show()
+                """           
+                checkerboard_background = np.indices(grid_size).sum(axis=0) % 2
+                custom_color_map = mcolors.LinearSegmentedColormap.from_list("Custom", [(0, "silver"), (1, "white")], N=2)
+                fig, ax = plt.subplots(figsize=(10, 10))
+                ax.imshow(checkerboard_background, cmap=custom_color_map, origin='lower')
+                ax.plot(grid_size[0] // 2, grid_size[1] // 2, 'ro')
+                ax.plot(grid_after_10_x, grid_after_10_y, 'yo')
+                ax.plot(grid_after_30_x, grid_after_30_y, 'go')
+                ax.plot(grid_after_50_x, grid_after_50_y, 'bo')         
+                plt.title(f"Label {counter_record}")
+                # plt.savefig(f"Label {counter_record}")                    
+                plt.show()
                 """ 
                 
                 # ============================== #
