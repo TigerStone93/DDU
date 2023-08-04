@@ -547,6 +547,8 @@ if __name__ == "__main__":
             # Filtering the record data outside the grid
             current_record_sampled_filtered = np.delete(current_record_sampled, counter_exclude_array, axis=0)
 
+            # ============================== #
+            
             # Generating the map inputs by preprocessing
             map_copied = map.copy()
             # Drawing the circles representing location of vehicles on map for all vehicles, including unsampled ones
@@ -564,13 +566,21 @@ if __name__ == "__main__":
                 map_rotated_n_cropped = cv2.warpAffine(map_copied, M[:2], (map_cropping_size, map_cropping_size)) # (width, height)
                 map_input_array.append(map_rotated_n_cropped.astype(np.float32) / 128.0 - 1.0) # (num_vehicle_samples, map_cropping_size, map_cropping_size, 3)
 
+            # ============================== #
+            
+            # Converting the arrays to tensors for inputs of model
             map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples, map_cropping_size height, map_cropping_size width, 3 channels) → (num_vehicle_samples, 3 channels, map_cropping_size height, map_cropping_size width)
             record_input_tensor = torch.tensor(current_record_sampled_filtered, dtype=torch.float32).to(device) # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_30_tensor = torch.tensor(np.array(grid_label_after_30_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
             grid_label_after_50_tensor = torch.tensor(np.array(grid_label_after_50_array)).to(device) # (num_vehicle_samples, grid_size[0], grid_size[1])
         
+            # ============================== #
+            
+            # Getting the output by putting input to model
             output_after_10, output_after_30, output_after_50 = net(map_input_tensor, record_input_tensor)
+            
+            # ============================== #
             
             for i in range(len(current_record_sampled_filtered)):
                 output_after_10_max_coordinates = torch.argmax(output_after_10[i].view(-1))
