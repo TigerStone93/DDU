@@ -216,7 +216,7 @@ if __name__ == "__main__":
                 
                 # Filtering out some data of stationary vehicles
                 if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
-                    if counter_include % 4 == 0:
+                    if counter_include % 5 == 0:
                         counter_include += 1
                     else:
                         counter_exclude_array.append(counter_exclude)
