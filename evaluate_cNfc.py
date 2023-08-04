@@ -396,7 +396,7 @@ if __name__ == "__main__":
 
         # Sampling the 100 indices from 0 to 4950
         num_index_samples = 1
-        num_vehicle_samples = 50 # Vehicles are spawned in random points for each iteration.
+        num_vehicle_samples = 150 # Vehicles are spawned in random points for each iteration.
         for step in record_index_shuffled[:num_index_samples]:
             current_record = record[step]
             current_record_sampled = record[step][:num_vehicle_samples] # (num_vehicle_samples, [location.x, locataion.y, rotation.yaw, v.x, v.y]), x,y: meter    yaw: -180~180deg    v: m/s
@@ -450,7 +450,7 @@ if __name__ == "__main__":
                 
                 # Filtering out some data of stationary vehicles
                 if grid_after_10_x == grid_after_30_x == grid_after_50_x and grid_after_10_y == grid_after_30_y == grid_after_50_y:
-                    if counter_include % 5 == 0:
+                    if counter_include % 10 == 0:
                         counter_include += 1
                     else:
                         counter_exclude_array.append(counter_exclude)
