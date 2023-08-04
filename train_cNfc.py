@@ -33,8 +33,8 @@ def training_args():
     save_interval = 10
     save_loc = "./"
     epoch = 1000
-    first_milestone = 150  # Milestone for change in lr
-    second_milestone = 250  # Milestone for change in lr
+    first_milestone = 100  # Milestone for change in lr
+    second_milestone = 200  # Milestone for change in lr
 
     model = "resnet18"
 
