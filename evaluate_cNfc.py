@@ -47,11 +47,8 @@ def evaluation_args():
 
 # ========================================================================================== #
 
-# For GMM and softmax
-def test_classification_net(model, data_loader, device):
-    """
-    This function reports classification accuracy and confusion matrix over a dataset.
-    """
+# For test_classification_net() and get_roc_auc()
+def _get_logits_labels(model, data_loader, device):
     # Getting the logits and labels
     model.eval()
     logits = []
@@ -66,6 +63,14 @@ def test_classification_net(model, data_loader, device):
             labels.append(label)
     logits = torch.cat(logits, dim=0)
     labels = torch.cat(labels, dim=0)
+    return logits, labels
+
+# ========================================================================================== #
+
+# For GMM and softmax
+def test_classification_net(model, data_loader, device):
+    # Getting the logits and labels
+    logits, labels = _get_logits_labels(model, data_loader, device)
 
     # ============================== #
     
@@ -247,8 +252,8 @@ def logsumexp(logits):
 
 # For softmax
 def get_roc_auc(net, test_loader, ood_test_loader, uncertainty, device, confidence=False):
-    logits, _ = get_logits_labels(net, test_loader, device)
-    ood_logits, _ = get_logits_labels(net, ood_test_loader, device)
+    logits, _ = _get_logits_labels(net, test_loader, device)
+    ood_logits, _ = _get_logits_labels(net, ood_test_loader, device)
 
     return get_roc_auc_logits(logits, ood_logits, uncertainty, device, confidence=confidence)
 
