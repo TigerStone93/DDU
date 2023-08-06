@@ -374,7 +374,7 @@ if __name__ == "__main__":
     grid_label_after_50_tensor_list = []    
     for i in range(0, 1000):
         # Loading the matrix dataset for preprocessing
-        record = np.load("data/log_speed30/" + str(random.randrange(1000)) + ".npy") # (5000, number of vehicles spawned, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
+        record = np.load("data/log_speed30/" + str(i) + ".npy") # (5000, number of vehicles spawned, [location.x, locataion.y, rotation.yaw, v.x, v.y]))
         record_index_shuffled = list(range(1, np.shape(record)[0] - 50))
         random.shuffle(record_index_shuffled)
 
