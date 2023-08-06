@@ -354,7 +354,7 @@ if __name__ == "__main__":
             # ============================== #
             
             # Converting the arrays to tensors for inputs of model
-            map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples - len(counter_exclude_array), map_cropping_size height, map_cropping_size width, 3 channels) → (num_vehicle_samples, 3 channels, map_cropping_size height, map_cropping_size width)
+            map_input_tensor = (torch.tensor(np.array(map_input_array), dtype=torch.float32).permute(0, 3, 1, 2)).to(device) # (num_vehicle_samples - len(counter_exclude_array), map_cropping_size height, map_cropping_size width, 3 channels) → (num_vehicle_samples - len(counter_exclude_array), 3 channels, map_cropping_size height, map_cropping_size width)
             record_input_tensor = torch.tensor(current_record_sampled_filtered, dtype=torch.float32).to(device) # (num_vehicle_samples - len(counter_exclude_array), [location.x, locataion.y, rotation.yaw, v.x, v.y])
             grid_label_after_10_tensor = torch.tensor(np.array(grid_label_after_10_array)).to(device) # (num_vehicle_samples - len(counter_exclude_array), grid_size[0], grid_size[1])
             grid_label_after_30_tensor = torch.tensor(np.array(grid_label_after_30_array)).to(device) # (num_vehicle_samples - len(counter_exclude_array), grid_size[0], grid_size[1])
