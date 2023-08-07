@@ -378,8 +378,8 @@ if __name__ == "__main__":
     grid_label_after_10_tensor_list_2 = []
     grid_label_after_30_tensor_list_2 = []
     grid_label_after_50_tensor_list_2 = []
-    for i in range(0, 1000):
-        print("========== Run", i, "==========")
+    for iteration_index in range(0, 1000):
+        print("========== Run", iteration_index, "==========")
         timestamp_step_start = time.time()
         
         # Loading the matrix dataset for preprocessing
@@ -553,7 +553,7 @@ if __name__ == "__main__":
             # ============================== #
             
             # Appending the tensors to lists for inputs of model and labels
-            if i < 800:
+            if iteration_index < 800:
                 map_input_tensor_list.append(map_input_tensor)
                 record_input_tensor_list.append(record_input_tensor)
                 grid_label_after_10_tensor_list.append(grid_label_after_10_tensor)
@@ -585,46 +585,67 @@ if __name__ == "__main__":
                 output_after_50_x = output_after_50_max_coordinates // 127
                 output_after_50_y = output_after_50_max_coordinates % 127
                 """
+
+        # Concatenating the tensors in lists to save tensors as dataset
+        if (iteration_index + 1) % 10 == 0:
+            if iteration_index < 800:
+                map_input_tensor_concatenated = torch.cat(map_input_tensor_list, dim=0) # (total, 3 channels, map_cropping_size height, map_cropping_size width)
+                map_input_tensor_list.clear()
+                record_input_tensor_concatenated = torch.cat(record_input_tensor_list, dim=0) # (total, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+                record_input_tensor_list.clear()
+                grid_label_after_10_tensor_concatenated = torch.cat(grid_label_after_10_tensor_list, dim=0) # (total, grid_size[0], grid_size[1])
+                grid_label_after_10_tensor_list.clear()
+                grid_label_after_30_tensor_concatenated = torch.cat(grid_label_after_30_tensor_list, dim=0) # (total, grid_size[0], grid_size[1])
+                grid_label_after_30_tensor_list.clear()
+                grid_label_after_50_tensor_concatenated = torch.cat(grid_label_after_50_tensor_list, dim=0) # (total, grid_size[0], grid_size[1])
+                grid_label_after_50_tensor_list.clear()
                 
+                tensors_dict = {"map_input_tensor_concatenated": map_input_tensor_concatenated,
+                                           "record_input_tensor_concatenated": record_input_tensor_concatenated,
+                                           "grid_label_after_10_tensor_concatenated": grid_label_after_10_tensor_concatenated,
+                                           "grid_label_after_30_tensor_concatenated": grid_label_after_30_tensor_concatenated,
+                                           "grid_label_after_50_tensor_concatenated": grid_label_after_50_tensor_concatenated}
+
+                torch.save(tensors_dict, "tensors_dict_" + str(iteration_index + 1) + ".pth")
+                
+            else:
+                map_input_tensor_concatenated_2 = torch.cat(map_input_tensor_list_2, dim=0) # (total, 3 channels, map_cropping_size height, map_cropping_size width)
+                map_input_tensor_list_2.clear()
+                record_input_tensor_concatenated_2 = torch.cat(record_input_tensor_list_2, dim=0) # (total, [location.x, locataion.y, rotation.yaw, v.x, v.y])
+                record_input_tensor_list_2.clear()
+                grid_label_after_10_tensor_concatenated_2 = torch.cat(grid_label_after_10_tensor_list_2, dim=0) # (total, grid_size[0], grid_size[1])
+                grid_label_after_10_tensor_list_2.clear()
+                grid_label_after_30_tensor_concatenated_2 = torch.cat(grid_label_after_30_tensor_list_2, dim=0) # (total, grid_size[0], grid_size[1])
+                grid_label_after_30_tensor_list_2.clear()
+                grid_label_after_50_tensor_concatenated_2 = torch.cat(grid_label_after_50_tensor_list_2, dim=0) # (total, grid_size[0], grid_size[1])
+                grid_label_after_50_tensor_list_2.clear()
+                
+                tensors_dict_2 = {"map_input_tensor_concatenated_2": map_input_tensor_concatenated_2,
+                                                "record_input_tensor_concatenated_2": record_input_tensor_concatenated_2,
+                                                "grid_label_after_10_tensor_concatenated_2": grid_label_after_10_tensor_concatenated_2,
+                                                "grid_label_after_30_tensor_concatenated_2": grid_label_after_30_tensor_concatenated_2,
+                                                "grid_label_after_50_tensor_concatenated_2": grid_label_after_50_tensor_concatenated_2}
+                                                
+                torch.save(tensors_dict_2, "tensors_dict_2_" + str(iteration_index + 1) + ".pth")
+        
         timestamp_step_end = time.time()
         print(f"[Time] {timestamp_step_end - timestamp_step_start:.1f} seconds\n")
 
     # ============================== #
-
-    # Concatenating the tensors in lists to organize dataset
-    map_input_tensor_concatenated = torch.cat(map_input_tensor_list, dim=0) # (total, 3 channels, map_cropping_size height, map_cropping_size width)
-    record_input_tensor_concatenated = torch.cat(record_input_tensor_list, dim=0) # (total, [location.x, locataion.y, rotation.yaw, v.x, v.y])
-    grid_label_after_10_tensor_concatenated = torch.cat(grid_label_after_10_tensor_list, dim=0) # (total, grid_size[0], grid_size[1])
-    grid_label_after_30_tensor_concatenated = torch.cat(grid_label_after_30_tensor_list, dim=0) # (total, grid_size[0], grid_size[1])
-    grid_label_after_50_tensor_concatenated = torch.cat(grid_label_after_50_tensor_list, dim=0) # (total, grid_size[0], grid_size[1])
     
-    map_input_tensor_concatenated_2 = torch.cat(map_input_tensor_list_2, dim=0) # (total, 3 channels, map_cropping_size height, map_cropping_size width)
-    record_input_tensor_concatenated_2 = torch.cat(record_input_tensor_list_2, dim=0) # (total, [location.x, locataion.y, rotation.yaw, v.x, v.y])
-    grid_label_after_10_tensor_concatenated_2 = torch.cat(grid_label_after_10_tensor_list_2, dim=0) # (total, grid_size[0], grid_size[1])
-    grid_label_after_30_tensor_concatenated_2 = torch.cat(grid_label_after_30_tensor_list_2, dim=0) # (total, grid_size[0], grid_size[1])
-    grid_label_after_50_tensor_concatenated_2 = torch.cat(grid_label_after_50_tensor_list_2, dim=0) # (total, grid_size[0], grid_size[1])
-    
-    tensors_dict = {"map_input_tensor_concatenated": map_input_tensor_concatenated,
-                               "record_input_tensor_concatenated": record_input_tensor_concatenated,
-                               "grid_label_after_10_tensor_concatenated": grid_label_after_10_tensor_concatenated,
-                               "grid_label_after_30_tensor_concatenated": grid_label_after_30_tensor_concatenated,
-                               "grid_label_after_50_tensor_concatenated": grid_label_after_50_tensor_concatenated}
-                               
-    tensors_dict_2 = {"map_input_tensor_concatenated_2": map_input_tensor_concatenated_2,
-                                    "record_input_tensor_concatenated_2": record_input_tensor_concatenated_2,
-                                    "grid_label_after_10_tensor_concatenated_2": grid_label_after_10_tensor_concatenated_2,
-                                    "grid_label_after_30_tensor_concatenated_2": grid_label_after_30_tensor_concatenated_2,
-                                    "grid_label_after_50_tensor_concatenated_2": grid_label_after_50_tensor_concatenated_2}
-                                    
-    torch.save(tensors_dict, "tensors_dict.pth")
-    torch.save(tensors_dict_2, "tensors_dict_2.pth")
-    
-    loaded_tensors_dict = torch.load("tensors_dict.pth")
+    loaded_tensors_dict = torch.load("tensors_dict_800.pth")
     loaded_tensor_1 = loaded_tensors_dict["map_input_tensor_concatenated"]
     loaded_tensor_2 = loaded_tensors_dict["record_input_tensor_concatenated"]
     loaded_tensor_3 = loaded_tensors_dict["grid_label_after_10_tensor_concatenated"]
     loaded_tensor_4 = loaded_tensors_dict["grid_label_after_30_tensor_concatenated"]
     loaded_tensor_5 = loaded_tensors_dict["grid_label_after_50_tensor_concatenated"]
+    
+    loaded_tensors_dict = torch.load("tensors_dict_2_1000.pth")
+    loaded_tensor_1 = loaded_tensors_dict["map_input_tensor_concatenated_2"]
+    loaded_tensor_2 = loaded_tensors_dict["record_input_tensor_concatenated_2"]
+    loaded_tensor_3 = loaded_tensors_dict["grid_label_after_10_tensor_concatenated_2"]
+    loaded_tensor_4 = loaded_tensors_dict["grid_label_after_30_tensor_concatenated_2"]
+    loaded_tensor_5 = loaded_tensors_dict["grid_label_after_50_tensor_concatenated_2"]
     
     exit() #####
     
